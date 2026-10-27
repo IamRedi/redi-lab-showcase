@@ -7,6 +7,34 @@ gates and leaves evidence that can be replayed and audited later.
 
 ![VIRTUTES Workbench](docs/media/workbench.png)
 
+## See it work
+
+![VIRTUTES demo](docs/media/virtutes-demo.gif)
+
+The demo (full-quality [MP4](docs/media/virtutes-demo.mp4)) opens a retained real-provider build, **ILIRIA**,
+in the Workbench. ILIRIA is a creative production board that the Professional product factory built
+from one request in 6 model calls, about 49k tokens, USD 0.15 and 1 min 14 s. The demo then
+opens the generated app and creates real records. The app enforces its own workflow: new videos
+must start in *Idea* and move forward stage by stage.
+
+| Factory view: every station verified | Evidence and instrumentation |
+| --- | --- |
+| ![Factory view](docs/media/factory-app-ready.png) | ![Evidence](docs/media/evidence.png) |
+| **The generated app with real records** | **Mobile Workbench** |
+| ![Generated app](docs/media/generated-app-board.png) | <img src="docs/media/mobile-workbench.png" width="260" alt="Mobile Workbench"> |
+
+### Governance in action
+
+Not every run ends in APP READY, and that is by design. In a live build of a car-repair job tracker,
+**Ora** stopped planning until the owner settled what the brief left open. Later **Teuta's** UI failed
+a real browser check: the dashboard was missing the filter controls the spec required. The line then
+tried a same-station correction and a stronger worker. When both failed, it stopped and asked the
+owner instead of shipping. The whole run spent USD 0.21 against a USD 2.00 ceiling.
+
+| Owner spec decision | Recovery exhausted, owner action |
+| --- | --- |
+| ![Spec decision](docs/media/owner-spec-decision.png) | ![Governed recovery](docs/media/governed-recovery.png) |
+
 ## Core ideas
 
 - **Stations vs. workers.** A station (spec, build, test, review, visual…)
@@ -39,7 +67,7 @@ on desktop and mobile, with budget controls, per-task telemetry and an
 
 - A **Mini CRM** built end to end by the factory line.
 - A **multi-station parallel live run** across a dependency DAG.
-- About **870 unit tests**.
+- **952 tests**. On Windows, run them in UTF-8 mode (`PYTHONUTF8=1`); two integration tests depend on it.
 - **Zero runtime dependencies**: Python standard library only (Python 3.11+).
 
 ## Getting started

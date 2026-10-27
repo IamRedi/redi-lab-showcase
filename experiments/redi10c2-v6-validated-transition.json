@@ -1,0 +1,203 @@
+{
+  "approval": {
+    "approved_by": "owner",
+    "audit_reference": "owner-approval VALIDATED; bound to provenance record d7ed2e576dc4dde1d143d72ddf2afd0ddc1678f73a6019c74eb456457346e58f",
+    "evidence_hash": "56bbbde9918fb636b1624cc417467493826e8c6f69b64f9ad6d0c237c4248ac9",
+    "rung": "VALIDATED"
+  },
+  "criteria_v2_hash": "c34b477152a093c774e0d73bc294e98d45303678417c764ae022e9588a4f33aa",
+  "dwell": {
+    "dwell_evidence_hash": "203595dfe46d867545bd2a250cd2e2c57c10aea2af2bb510f77548ab0d61a2bf",
+    "ends_earliest": "2026-10-09",
+    "regression_events_allowed": 0,
+    "required_days": 14,
+    "started_date": "2026-09-25"
+  },
+  "ledger_events": [
+    {
+      "event_type": "MANIFEST_FROZEN",
+      "hash": "04b684ec30e38abebc315666d71822dada2575c0dd482f634a18c5da2b617066",
+      "payload": {
+        "bootstrap": {
+          "captured_state_hash": "b0f9860f99aa1c0a90de37354caa8c6b033a31d87e1ee22eedf6f88914205325",
+          "fallback_description": "no promoted recipe; REDI-07B fallback operational path",
+          "owner_approved_by": "owner",
+          "owner_audit_reference": "audit-bootstrap-001",
+          "restoration_procedure_hash": "3529cb1b6826405050ed54938850335c97e96fa81da6622efd054d5610fce8b2",
+          "restoration_replay_x2_identical": true,
+          "state_id": "no_promoted_recipe_fallback_v0"
+        },
+        "first_baseline": true,
+        "manifest": {
+          "criteria": {
+            "allow_prior_operational_state_rollback": true,
+            "justifications": {
+              "approval_rungs": "REDI-08/09 governance: promotion events require explicit human/audit approval citing the exact evidence hash",
+              "bootstrap_rollback": "for the FIRST-EVER stable baseline the pre-promotion operational state is 'no promoted recipe' (fallback path), which cannot carry recipe-level quality evidence; v2 requires instead an exactly captured, owner-approved prior state with a deterministic, replay-proven restoration procedure. Later promotions keep the v1 quality-verified-recipe rollback rule unchanged",
+              "mandatory_gates": "identical to the frozen MCW/transfer verification gates: private, integration, reviewer, scope/security",
+              "min_distinct_products": "the store's confidence model itself marks single-product evidence LOW/SINGLE_PRODUCT_EVIDENCE; three independent products is the smallest set that demonstrates cross-product generalization with majority agreement",
+              "min_verified_transfers": "one fully verified paired holdout per product; fewer cannot support a stability claim",
+              "require_replay_x2_per_product": "REDI-07..10 replay discipline: evidence must reconstruct from persisted bytes alone, twice identically",
+              "require_rollback_target_quality_evidence": "a rollback path is only real if the target itself carries verified quality evidence (REDI-08 v5-failed finding)",
+              "stability_window_min_days": "a VALIDATED recipe must dwell without recorded regression before STABLE; 14 days is the minimum observation window",
+              "validity_window_max_days": "stability is bounded; unbounded claims are forbidden by the research charter"
+            },
+            "mandatory_gates": [
+              "private_verification",
+              "integration",
+              "reviewer",
+              "scope_security"
+            ],
+            "min_distinct_products": 3,
+            "min_verified_transfers": 3,
+            "preregistered_before_results": true,
+            "require_all_mandatory_gates": true,
+            "require_evidence_ledger_completeness": true,
+            "require_explicit_approval_stable": true,
+            "require_explicit_approval_validated": true,
+            "require_owner_approved_prior_state": true,
+            "require_quality_non_regression": true,
+            "require_replay_x2_per_product": true,
+            "require_restoration_replay_proof": true,
+            "require_rollback_target_quality_evidence": true,
+            "stability_window_min_days": 14,
+            "validity_window_max_days": 90,
+            "version": 2
+          },
+          "first_baseline": true,
+          "qualification_id": "redi10c2f_live_qualification_v1",
+          "recipe": {
+            "canonical_hash": "de3aec903f7cf43fee3cf09f65503b8a82c2b81727cdcfe5515926af75dd8e3e",
+            "lifecycle": "SHADOW",
+            "recipe_id": "recipe_cold_39553c39ceb593e2bc24775be1c420e2",
+            "version": 6
+          },
+          "rollback_target": {
+            "canonical_hash": "b75556d0446065900b05f3df322d6a63a95acf0938646cb8bc223c8e61709a5c",
+            "lifecycle": "SHADOW",
+            "recipe_id": "recipe_cold_39553c39ceb593e2bc24775be1c420e2",
+            "version": 1
+          },
+          "station_id": "station_mcw_implementation_v0",
+          "task_class": "mcw_python_component_v1",
+          "valid_from": "2026-09-25T00:00:00Z",
+          "valid_until": "2026-12-24T00:00:00Z",
+          "version": 1
+        },
+        "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5"
+      },
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sequence": 1
+    },
+    {
+      "event_type": "STATE_CHANGED",
+      "hash": "a4834447a809305f7899e0cf2c7785615dce1fca735f516717411951533b19fd",
+      "payload": {
+        "approval": null,
+        "evidence": {
+          "checks": {
+            "BOOTSTRAP_ROLLBACK_PATH": {
+              "met": true,
+              "observed": "no_promoted_recipe_fallback_v0",
+              "threshold": "captured + owner-approved + restoration replay x2"
+            },
+            "EVIDENCE_COMPLETENESS": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            },
+            "INDEPENDENT_PRODUCT_COVERAGE": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            },
+            "MANDATORY_GATES": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            },
+            "QUALITY_NON_REGRESSION": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            },
+            "REPLAY_X2_PER_PRODUCT": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            },
+            "VERIFIED_TRANSFERS": {
+              "met": true,
+              "observed": 3,
+              "threshold": 3
+            }
+          },
+          "criteria_hash": "c34b477152a093c774e0d73bc294e98d45303678417c764ae022e9588a4f33aa",
+          "criteria_met": true,
+          "criteria_version": 2,
+          "failed_criteria": [],
+          "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5"
+        },
+        "from": "SHADOW",
+        "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5",
+        "to": "ELIGIBLE_FOR_VALIDATION"
+      },
+      "previous_hash": "04b684ec30e38abebc315666d71822dada2575c0dd482f634a18c5da2b617066",
+      "sequence": 2
+    },
+    {
+      "event_type": "PROVENANCE_BOUND",
+      "hash": "e39817e1f5111c5713ab109eb23e3e639f7766f93cf69c49d5afaa9ecd8a2b75",
+      "payload": {
+        "audit_reference": "owner-approval VALIDATED; bound to provenance record d7ed2e576dc4dde1d143d72ddf2afd0ddc1678f73a6019c74eb456457346e58f",
+        "bound_at_state": "ELIGIBLE_FOR_VALIDATION",
+        "provenance_record_hash": "d7ed2e576dc4dde1d143d72ddf2afd0ddc1678f73a6019c74eb456457346e58f"
+      },
+      "previous_hash": "a4834447a809305f7899e0cf2c7785615dce1fca735f516717411951533b19fd",
+      "sequence": 3
+    },
+    {
+      "event_type": "STATE_CHANGED",
+      "hash": "4e512d5c2b8626c029eb1029e1fa0038fef9f27183a8bc16216ceca56fbd14ba",
+      "payload": {
+        "approval": {
+          "approved_by": "owner",
+          "audit_reference": "owner-approval VALIDATED; bound to provenance record d7ed2e576dc4dde1d143d72ddf2afd0ddc1678f73a6019c74eb456457346e58f",
+          "evidence_hash": "56bbbde9918fb636b1624cc417467493826e8c6f69b64f9ad6d0c237c4248ac9",
+          "rung": "VALIDATED"
+        },
+        "evidence": {
+          "rung": "VALIDATED"
+        },
+        "from": "ELIGIBLE_FOR_VALIDATION",
+        "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5",
+        "to": "VALIDATED"
+      },
+      "previous_hash": "e39817e1f5111c5713ab109eb23e3e639f7766f93cf69c49d5afaa9ecd8a2b75",
+      "sequence": 4
+    },
+    {
+      "event_type": "DWELL_STARTED",
+      "hash": "74dd021e07c87990f57ee248bd62fea2e90497de498e13c7bf80d46c0bc5ed19",
+      "payload": {
+        "dwell_evidence_hash": "203595dfe46d867545bd2a250cd2e2c57c10aea2af2bb510f77548ab0d61a2bf",
+        "regression_events_allowed": 0,
+        "required_days": 14,
+        "started_date": "2026-09-25"
+      },
+      "previous_hash": "4e512d5c2b8626c029eb1029e1fa0038fef9f27183a8bc16216ceca56fbd14ba",
+      "sequence": 5
+    }
+  ],
+  "ledger_sha256": "3d8fad30c5338eb09aa698d58c8cbfc3261d1853c8b09610bcdc767c2a73b9bb",
+  "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5",
+  "provenance_record_hash": "d7ed2e576dc4dde1d143d72ddf2afd0ddc1678f73a6019c74eb456457346e58f",
+  "provider_calls": 0,
+  "recipe": {
+    "canonical_hash": "de3aec903f7cf43fee3cf09f65503b8a82c2b81727cdcfe5515926af75dd8e3e",
+    "recipe_id": "recipe_cold_39553c39ceb593e2bc24775be1c420e2",
+    "version": 6
+  },
+  "record_id": "redi10c2_v6_validated_transition_v1",
+  "stable_marked": false
+}

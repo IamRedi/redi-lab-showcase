@@ -1,0 +1,6 @@
+{
+  "build_id": "ceab8c955c8b",
+  "ui_sha256": "65a15f0bbb1098db8bbf9d601f284eae27eb1509362a7cb9c2027d9bedc68765",
+  "evidence_sha256": "43c142d4345e5d420a4374e59b126dcebd3c8c2c8479cabc869622a4e9a3d3fe",
+  "failure": "IntegrityError: KeyError: 'font-family'"
+}

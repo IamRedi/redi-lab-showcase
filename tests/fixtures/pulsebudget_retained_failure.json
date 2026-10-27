@@ -1,0 +1,37 @@
+{
+  "evidence_sha256": "fde4799a5a65469274021c4db19b0bf23a7e323104677a408a1bde90f7eaef1d",
+  "prompt": "Build a complete local personal finance and budget app called PulseBudget.\nThe app should help one person track income, expenses and monthly budgets.\nCore features:\n- add income and expense transactions\n- fields: date, title/description, amount, type, category, optional note\n- custom categories\n- monthly budget per expense category\n- edit/delete transactions\n- search/filter by month, category, income/expense\n- persistent SQLite storage\nDashboard:\n- total income this month\n- total expenses this month\n- current balance\n- remaining monthly budget\n- spending by category\n- recent transactions\n- monthly income vs expenses\nUse real stored data only. No fake dashboard values.\nUI:\n- polished modern responsive design\n- professional typography and spacing\n- premium dashboard\n- high-quality consistent SVG/Lucide-style icons\n- no emojis as UI icons\n- clean desktop and intentionally designed mobile layout\n- empty states, validation, delete confirmation, success feedback, user-friendly errors\nFinance rules:\n- decimal-safe money calculations\n- correct income/expense semantics\n- dashboard totals must exactly match stored transactions\n- edits/deletes must update totals and charts immediately\nTest through the real browser:\n- create income\n- create multiple expenses\n- create budgets\n- edit/delete\n- verify dashboard calculations\n- verify filters\n- reload\n- restart app\n- verify persistence\n- mobile layout\n- invalid input\nBefore APP READY, visually review and polish the app if it still looks like a prototype.\nFinal result:\nAPP READY \u2192 OPEN APP",
+  "backend": "openai-live-multistation-normal-app-experimental",
+  "artifacts": [
+    {
+      "rel_path": "database.py",
+      "content": "\"\"\"SQLite storage helpers for mini_crm.\"\"\"\n\nimport sqlite3\n\n\ndef connect(path: str) -> sqlite3.Connection:\n    \"\"\"Open a database connection and ensure the CRM schema exists.\"\"\"\n    conn = sqlite3.connect(path)\n    conn.row_factory = sqlite3.Row\n    conn.execute(\"PRAGMA foreign_keys = ON\")\n    conn.execute(\n        \"CREATE TABLE IF NOT EXISTS clients (\"\n        \"id INTEGER PRIMARY KEY, \"\n        \"name TEXT NOT NULL\"\n        \")\"\n    )\n    conn.execute(\n        \"CREATE TABLE IF NOT EXISTS jobs (\"\n        \"id INTEGER PRIMARY KEY, \"\n        \"client_id REFERENCES clients(id), \"\n        \"title TEXT NOT NULL, \"\n        \"status TEXT CHECK(status IN ('NEW', 'ACTIVE', 'DONE')), \"\n        \"notes TEXT NOT NULL DEFAULT ''\"\n        \")\"\n    )\n    conn.commit()\n    return conn\n\n\ndef dashboard_counts(conn: sqlite3.Connection) -> dict[str, int]:\n    \"\"\"Return the complete set of dashboard totals.\"\"\"\n    row = conn.execute(\n        \"SELECT \"\n        \"COUNT(*) AS jobs_total, \"\n        \"SUM(CASE WHEN status = 'NEW' THEN 1 ELSE 0 END) AS new_count, \"\n        \"SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_count, \"\n        \"SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) AS done_count \"\n        \"FROM jobs\"\n    ).fetchone()\n    clients_total = conn.execute(\"SELECT COUNT(*) FROM clients\").fetchone()[0]\n    return {\n        \"jobs_total\": int(row[\"jobs_total\"]),\n        \"NEW\": int(row[\"new_count\"]),\n        \"ACTIVE\": int(row[\"active_count\"]),\n        \"DONE\": int(row[\"done_count\"]),\n        \"clients_total\": int(clients_total),\n    }\n",
+      "sha256": "6b86a3089fffceb11a23c1ab114ba3f5ff1d50692bd8d10db6bd86f78515e455",
+      "stored_sha256": "6b86a3089fffceb11a23c1ab114ba3f5ff1d50692bd8d10db6bd86f78515e455"
+    },
+    {
+      "rel_path": "dataflow.py",
+      "content": "\"\"\"Status validation and job transition rules.\"\"\"\n\nVALID_STATUSES = [\"NEW\", \"ACTIVE\", \"DONE\"]\n\nTRANSITIONS = {\n    \"NEW\": [\"ACTIVE\"],\n    \"ACTIVE\": [\"DONE\"],\n    \"DONE\": [],\n}\n\n\ndef normalize_status(status: str) -> str:\n    \"\"\"Return a canonical status value or raise ValueError.\"\"\"\n    if not isinstance(status, str):\n        raise ValueError(\"status must be a valid status string\")\n    normalized = status.strip().upper()\n    if normalized not in VALID_STATUSES:\n        raise ValueError(\"invalid status: \" + str(status))\n    return normalized\n\n\ndef can_transition(old: str, new: str) -> bool:\n    \"\"\"Return whether a status may change from *old* to *new*.\"\"\"\n    old_status = normalize_status(old)\n    new_status = normalize_status(new)\n    return old_status == new_status or new_status in TRANSITIONS[old_status]\n",
+      "sha256": "90bacd6ce3eefd306864be066616a73dbef226bb39dbaf69b4f5c79b9ea044ed",
+      "stored_sha256": "90bacd6ce3eefd306864be066616a73dbef226bb39dbaf69b4f5c79b9ea044ed"
+    }
+  ],
+  "integrity": {
+    "build_dataflow": {
+      "status": "PASS",
+      "stage": "build_dataflow",
+      "checks": [
+        "syntax",
+        "package_imports",
+        "public_symbols",
+        "call_signatures",
+        "state_transitions"
+      ]
+    },
+    "build_database": {
+      "status": "FAIL",
+      "reason": "IntegrityError: TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'"
+    }
+  },
+  "manifest_product_key": "mini_crm_job_manager"
+}

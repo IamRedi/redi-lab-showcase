@@ -1,0 +1,342 @@
+{
+  "product_name": "PitlaneOne Lite",
+  "product_type": "business_workflow",
+  "primary_goal": "Provide a local, persistent garage job management application for tracking customers, their vehicles, and work orders from new intake through completion.",
+  "target_user": "Garage staff managing customer vehicles and repair or service jobs locally.",
+  "journeys": [
+    "A garage staff member launches PitlaneOne Lite using OPEN APP and arrives at the dashboard.",
+    "A staff member creates a customer record, then creates one or more vehicles linked to that customer.",
+    "A staff member creates a work order for a vehicle, enters the job description, notes, estimated price, and initial NEW status.",
+    "A staff member reviews open jobs on the dashboard or work-order board and advances a job from NEW to IN_PROGRESS and then DONE.",
+    "A staff member records or updates the final price and job notes before or when completing a work order.",
+    "A staff member reviews dashboard counts for open jobs and completed jobs after reopening the locally packaged application."
+  ],
+  "functional_requirements": [
+    "Provide local management of customer records.",
+    "Provide local management of vehicle records linked to customers.",
+    "Provide local management of work orders linked to vehicles.",
+    "Allow each work order to store a job description and appendable notes.",
+    "Allow each work order to store NEW, IN_PROGRESS, or DONE status.",
+    "Allow each work order to store an estimated price and a final price.",
+    "Provide a dashboard showing counts of open jobs and completed jobs.",
+    "Persist all customer, vehicle, and work-order data in SQLite storage.",
+    "Provide an OPEN APP launch mechanism for the packaged local application.",
+    "Package the application as a runnable local application.",
+    "Test the completed application before delivery."
+  ],
+  "non_functional_requirements": [
+    "The application must use a clean responsive web user interface.",
+    "The application must operate locally without requiring cloud services or third-party integrations.",
+    "SQLite data must persist across normal application restarts.",
+    "The packaged application must be runnable by the delivered OPEN APP launch mechanism.",
+    "The application should provide clear feedback for successful saves, validation failures, loading activity, backend errors, and destructive actions."
+  ],
+  "views": [
+    {
+      "id": "dashboard",
+      "title": "Dashboard",
+      "kind": "dashboard"
+    },
+    {
+      "id": "customers",
+      "title": "Customers",
+      "kind": "table",
+      "entity": "customer"
+    },
+    {
+      "id": "vehicles",
+      "title": "Vehicles",
+      "kind": "table",
+      "entity": "vehicle"
+    },
+    {
+      "id": "work_orders",
+      "title": "Work Orders",
+      "kind": "board",
+      "entity": "work_order"
+    }
+  ],
+  "navigation": [
+    "dashboard",
+    "customers",
+    "vehicles",
+    "work_orders"
+  ],
+  "entities": [
+    {
+      "id": "customer",
+      "label": "Customer",
+      "plural": "Customers",
+      "display_field": "name",
+      "fields": [
+        {
+          "id": "name",
+          "label": "Name",
+          "type": "text",
+          "required": true,
+          "unique": false,
+          "sample": "Jordan Patel"
+        },
+        {
+          "id": "email",
+          "label": "Email",
+          "type": "email",
+          "required": false,
+          "unique": false,
+          "sample": "jordan.patel@example.com"
+        },
+        {
+          "id": "phone",
+          "label": "Phone",
+          "type": "text",
+          "required": false,
+          "unique": false,
+          "sample": "555-0142"
+        }
+      ]
+    },
+    {
+      "id": "vehicle",
+      "label": "Vehicle",
+      "plural": "Vehicles",
+      "display_field": "registration",
+      "fields": [
+        {
+          "id": "customer",
+          "label": "Customer",
+          "type": "reference",
+          "required": true,
+          "unique": false,
+          "sample": 1,
+          "references": "customer"
+        },
+        {
+          "id": "registration",
+          "label": "Registration",
+          "type": "text",
+          "required": true,
+          "unique": false,
+          "sample": "AB12 CDE"
+        },
+        {
+          "id": "make",
+          "label": "Make",
+          "type": "text",
+          "required": true,
+          "unique": false,
+          "sample": "Toyota"
+        },
+        {
+          "id": "model",
+          "label": "Model",
+          "type": "text",
+          "required": true,
+          "unique": false,
+          "sample": "Corolla"
+        }
+      ]
+    },
+    {
+      "id": "work_order",
+      "label": "Work Order",
+      "plural": "Work Orders",
+      "display_field": "job_description",
+      "fields": [
+        {
+          "id": "vehicle",
+          "label": "Vehicle",
+          "type": "reference",
+          "required": true,
+          "unique": false,
+          "sample": 1,
+          "references": "vehicle"
+        },
+        {
+          "id": "job_description",
+          "label": "Job Description",
+          "type": "long_text",
+          "required": true,
+          "unique": false,
+          "sample": "Diagnose and replace worn front brake pads."
+        },
+        {
+          "id": "notes",
+          "label": "Notes",
+          "type": "long_text",
+          "required": false,
+          "unique": false,
+          "sample": "Customer requested a call before any additional work.",
+          "append": true
+        },
+        {
+          "id": "status",
+          "label": "Status",
+          "type": "enum",
+          "required": true,
+          "unique": false,
+          "sample": "NEW",
+          "default": "NEW",
+          "choices": [
+            "NEW",
+            "IN_PROGRESS",
+            "DONE"
+          ]
+        },
+        {
+          "id": "estimated_price",
+          "label": "Estimated Price",
+          "type": "money",
+          "required": false,
+          "unique": false,
+          "sample": 18000,
+          "min": 0
+        },
+        {
+          "id": "final_price",
+          "label": "Final Price",
+          "type": "money",
+          "required": false,
+          "unique": false,
+          "sample": 17500,
+          "min": 0
+        }
+      ]
+    }
+  ],
+  "business_rules": [
+    {
+      "kind": "restrict_delete",
+      "entity": "customer"
+    },
+    {
+      "kind": "restrict_delete",
+      "entity": "vehicle"
+    },
+    {
+      "kind": "restrict_delete",
+      "entity": "work_order"
+    }
+  ],
+  "workflows": [
+    {
+      "entity": "work_order",
+      "field": "status",
+      "initial": "NEW",
+      "transitions": {
+        "NEW": [
+          "IN_PROGRESS"
+        ],
+        "IN_PROGRESS": [
+          "DONE"
+        ],
+        "DONE": []
+      }
+    }
+  ],
+  "validation_rules": [
+    "A customer name is required.",
+    "A vehicle must be linked to an existing customer and must include registration, make, and model.",
+    "A work order must be linked to an existing vehicle and must include a job description.",
+    "Work-order status must be one of NEW, IN_PROGRESS, or DONE.",
+    "Estimated price and final price are optional nonnegative monetary amounts stored as integer cents.",
+    "Notes are appendable so new note text is added without overwriting existing note history.",
+    "A customer cannot be deleted while vehicles reference it.",
+    "A vehicle cannot be deleted while work orders reference it.",
+    "Deletion of a work order requires destructive-action confirmation.",
+    "Status changes may only move forward from NEW to IN_PROGRESS and from IN_PROGRESS to DONE; editing without changing status is allowed."
+  ],
+  "persistence": {
+    "enabled": true,
+    "engine": "sqlite",
+    "restart_required": false
+  },
+  "security_privacy": [
+    "The application is local-only and does not require user authentication because none was requested.",
+    "Customer and garage data must remain in the local SQLite database and must not be transmitted to external services.",
+    "The application should validate inputs before persistence and display backend failures without exposing unnecessary internal details.",
+    "Destructive record deletion must require confirmation."
+  ],
+  "responsive": [
+    "Support clean use on desktop and narrow mobile-sized screens.",
+    "Adapt tables and work-order board content so essential fields and actions remain usable on smaller screens.",
+    "Provide touch-friendly controls and readable form layouts at responsive breakpoints."
+  ],
+  "integrations": [],
+  "states": {
+    "empty": "No records are available yet. Create a record to get started.",
+    "loading": "Loading garage data.",
+    "success": "Changes saved successfully.",
+    "validation_error": "Please correct the highlighted fields and try again.",
+    "backend_error": "The local data operation could not be completed. Please try again.",
+    "destructive_confirmation": "Are you sure you want to delete this record? This action cannot be undone."
+  },
+  "accessibility": [
+    "Use semantic headings, navigation landmarks, form labels, and button labels.",
+    "Ensure all primary actions and forms are usable with keyboard navigation.",
+    "Provide visible keyboard focus indicators.",
+    "Do not rely on color alone to communicate work-order status or validation errors.",
+    "Associate validation messages with their relevant input fields."
+  ],
+  "acceptance_criteria": [
+    "OPEN APP launches the packaged PitlaneOne Lite application for direct local use.",
+    "A user can create, view, edit, and delete customers when no linked vehicles prevent deletion.",
+    "A user can create, view, edit, and delete vehicles linked to customers when no linked work orders prevent deletion.",
+    "A user can create, view, edit, and delete work orders linked to vehicles.",
+    "A work order supports job description, appendable notes, estimated price, final price, and status.",
+    "A new work order starts in NEW status and can progress to IN_PROGRESS and then DONE.",
+    "The dashboard displays derived counts for open jobs and completed jobs.",
+    "Open jobs include work orders in NEW and IN_PROGRESS status, while completed jobs include work orders in DONE status.",
+    "Work-order, vehicle, and customer data remains available after closing and reopening the local application.",
+    "Invalid required fields and negative price values are rejected with clear validation feedback.",
+    "The responsive interface remains usable on desktop and narrow viewport sizes.",
+    "The delivered application is tested and packaged as a runnable local application."
+  ],
+  "assumptions": [
+    "A customer record needs a name as its primary display value; email and phone are optional contact details.",
+    "A vehicle is identified for display by its registration and also stores make and model.",
+    "Prices are optional because a garage may create a work order before either an estimate or final charge is known.",
+    "Money field samples and stored values are integer cents, so 18000 represents 180.00 in the applicable local currency.",
+    "Open jobs are defined as work orders with NEW or IN_PROGRESS status.",
+    "The requested workflow is forward-only; completed jobs are not reopened unless requirements are later changed.",
+    "Local SQLite storage is located with the packaged application or its local application data and is retained across normal restarts."
+  ],
+  "uncertainties": [
+    "The target operating system and packaging format for the delivered OPEN APP launcher were not specified.",
+    "The owner did not specify a currency, tax treatment, labor and parts breakdown, appointments, invoices, or customer communications; these are excluded."
+  ],
+  "provenance": [
+    {
+      "kind": "owner_prompt",
+      "name": "owner request",
+      "text": "Build a complete local garage job management app called PitlaneOne Lite. It must manage customers, vehicles linked to customers, work orders linked to vehicles, job descriptions, notes, status NEW / IN_PROGRESS / DONE, estimated and final price, and a dashboard showing open and completed jobs. Use persistent SQLite storage and a clean responsive web UI. The final result must be fully tested, packaged as a runnable application, and delivered with OPEN APP so I can launch and use it directly.",
+      "sha256": "ec413cfd937c9a8afd8ac1cb97d463db66897c74283deac4fa8857037a557007"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "open_jobs",
+      "label": "Open Jobs",
+      "entity": "work_order",
+      "operation": "count",
+      "where": {
+        "field": "status",
+        "values": [
+          "NEW",
+          "IN_PROGRESS"
+        ]
+      }
+    },
+    {
+      "id": "completed_jobs",
+      "label": "Completed Jobs",
+      "entity": "work_order",
+      "operation": "count",
+      "where": {
+        "field": "status",
+        "values": [
+          "DONE"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "binding_version": 1,
+  "execution_policy": "redi09f_triangle_v2_rerun_v1",
+  "note": "forward-only execution-harness binding for the REDI-09F 3-cell triangle_classify_v2 rerun; scientific content is pinned by the rerun manifest hash",
+  "parent_manifest_hash": "c7d5606c340911fcbf5f2a233ac968de3768b1ef5eae13f108c9c23bc4bfa335",
+  "redi09e1_verdict": "TASK_SPECIFICATION_DEFECT_CONFIRMED",
+  "rerun_manifest_hash": "3aa07cfca0fb37f39b8af091121b54b8de0da7a62842aa321038fac3e0c4be9b",
+  "runner_path": "scripts/run_redi_09f_triangle_v2_rerun.py",
+  "runner_sha256": "bd4f8c9f9ca487cdc576f8edf208a1268ba2e902a3e8a47b37f9ba85ed231efa"
+}

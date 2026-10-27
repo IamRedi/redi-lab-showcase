@@ -1,0 +1,7 @@
+# REDI-09E binds the runner's raw SHA-256; Windows checkouts must preserve LF.
+scripts/run_redi_09e_live_expansion.py -text
+# Forensic fixtures are evidence bytes; never normalize their line endings.
+tests/fixtures/mini_crm_wb847df3c91090/* -text whitespace=cr-at-eol
+tests/fixtures/mini_crm_wbc1564339281f/* -text whitespace=cr-at-eol
+tests/fixtures/mini_crm_wb67e4bed07ea3/* -text whitespace=cr-at-eol
+tests/fixtures/mini_crm_wbceab8c955c8b/* -text whitespace=cr-at-eol

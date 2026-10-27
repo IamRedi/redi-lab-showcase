@@ -1,0 +1,235 @@
+{
+  "build_id": "c1564339281f",
+  "backend": "openai-live-multistation-normal-app-experimental",
+  "provider": "openai",
+  "model": "gpt-5.6-terra",
+  "written_at": 1790496822.5774677,
+  "task_states": {
+    "build_database": "COMPLETED",
+    "build_dataflow": "COMPLETED",
+    "build_core": "COMPLETED",
+    "build_ui": "COMPLETED",
+    "integration_assembly": "COMPLETED"
+  },
+  "failures": {},
+  "events": [
+    {
+      "event": "run_started",
+      "ts": 1790496738.888315,
+      "detail": "multistation_mini_crm_v1"
+    },
+    {
+      "event": "task_started",
+      "ts": 1790496738.8885927,
+      "task_id": "build_database"
+    },
+    {
+      "event": "component_task_started:database",
+      "ts": 1790496738.8885963
+    },
+    {
+      "event": "task_started",
+      "ts": 1790496738.8901908,
+      "task_id": "build_dataflow"
+    },
+    {
+      "event": "component_task_started:dataflow",
+      "ts": 1790496738.8901932
+    },
+    {
+      "event": "call_completed:build_dataflow",
+      "ts": 1790496746.9260879
+    },
+    {
+      "event": "task_completed",
+      "ts": 1790496746.9260893,
+      "task_id": "build_dataflow",
+      "detail": "sha256=6ade34103644885bc884b6c3f68bbe8df441b5d1d274b5e63868bb5fb6619ac7"
+    },
+    {
+      "event": "component_task_completed:dataflow",
+      "ts": 1790496746.9260907
+    },
+    {
+      "event": "artifact_retained:dataflow.py",
+      "ts": 1790496746.926091
+    },
+    {
+      "event": "call_completed:build_database",
+      "ts": 1790496753.4712446
+    },
+    {
+      "event": "task_completed",
+      "ts": 1790496753.471246,
+      "task_id": "build_database",
+      "detail": "sha256=0f047c52b6f2519b50d4adc30f8914fdd9057e9e81435c8426b5b80f145b4609"
+    },
+    {
+      "event": "component_task_completed:database",
+      "ts": 1790496753.4712477
+    },
+    {
+      "event": "artifact_retained:database.py",
+      "ts": 1790496753.4712484
+    },
+    {
+      "event": "task_started",
+      "ts": 1790496753.471569,
+      "task_id": "build_core"
+    },
+    {
+      "event": "component_task_started:core",
+      "ts": 1790496753.471571
+    },
+    {
+      "event": "call_completed:build_core",
+      "ts": 1790496779.2171934
+    },
+    {
+      "event": "task_completed",
+      "ts": 1790496779.217195,
+      "task_id": "build_core",
+      "detail": "sha256=2689903afba85b11c2eaf9c986b2b1e58dc53dbc1b41bc2bc0b83b915309d2ef"
+    },
+    {
+      "event": "component_task_completed:core",
+      "ts": 1790496779.2171967
+    },
+    {
+      "event": "artifact_retained:core.py",
+      "ts": 1790496779.2171974
+    },
+    {
+      "event": "task_started",
+      "ts": 1790496779.21737,
+      "task_id": "build_ui"
+    },
+    {
+      "event": "component_task_started:ui",
+      "ts": 1790496779.217373
+    },
+    {
+      "event": "call_completed:build_ui",
+      "ts": 1790496799.7302933
+    },
+    {
+      "event": "task_completed",
+      "ts": 1790496799.7302945,
+      "task_id": "build_ui",
+      "detail": "sha256=e619681a0f23bb8fbefbf26674cf6ad029a2f45e71b69263f56465446b4f6a15"
+    },
+    {
+      "event": "component_task_completed:ui",
+      "ts": 1790496799.7302961
+    },
+    {
+      "event": "artifact_retained:ui.py",
+      "ts": 1790496799.7302966
+    },
+    {
+      "event": "task_started",
+      "ts": 1790496799.730306,
+      "task_id": "integration_assembly"
+    },
+    {
+      "event": "component_task_started:service",
+      "ts": 1790496799.7303069
+    },
+    {
+      "event": "call_completed:integration_assembly",
+      "ts": 1790496822.550403
+    },
+    {
+      "event": "task_completed",
+      "ts": 1790496822.5504043,
+      "task_id": "integration_assembly",
+      "detail": "sha256=8b0aece225e0840e4dddc9332008ce6c189f226863d57ed2efc53a69ae09d814"
+    },
+    {
+      "event": "component_task_completed:service",
+      "ts": 1790496822.5504057
+    },
+    {
+      "event": "artifact_retained:service.py",
+      "ts": 1790496822.5504062
+    },
+    {
+      "event": "gate_started:structured_output_schema",
+      "ts": 1790496822.550497
+    },
+    {
+      "event": "gate_finished:structured_output_schema:pass",
+      "ts": 1790496822.5504982
+    },
+    {
+      "event": "gate_started:scope_security",
+      "ts": 1790496822.550499
+    },
+    {
+      "event": "gate_finished:scope_security:pass",
+      "ts": 1790496822.5505023
+    },
+    {
+      "event": "run_finished",
+      "ts": 1790496822.5768285,
+      "detail": "failed"
+    }
+  ],
+  "gates": {
+    "structured_output_schema": true,
+    "scope_security": true,
+    "public_verification": false,
+    "private_verification": false,
+    "integration": false,
+    "reviewer": false
+  },
+  "gate_reasons": {
+    "public_verification": "ModuleNotFoundError: No module named 'mini_crm.crm'"
+  },
+  "call_facts": {
+    "calls": 5,
+    "per_task": {
+      "build_dataflow": {
+        "input": 150,
+        "cached_input": 0,
+        "output": 686,
+        "cost_usd": "0.0085320",
+        "pricing_evidence_state": "SNAPSHOT_PROVEN",
+        "finish_reason": "stop"
+      },
+      "build_database": {
+        "input": 202,
+        "cached_input": 0,
+        "output": 1616,
+        "cost_usd": "0.0197960",
+        "pricing_evidence_state": "SNAPSHOT_PROVEN",
+        "finish_reason": "stop"
+      },
+      "build_core": {
+        "input": 1280,
+        "cached_input": 0,
+        "output": 3081,
+        "cost_usd": "0.0395320",
+        "pricing_evidence_state": "SNAPSHOT_PROVEN",
+        "finish_reason": "stop"
+      },
+      "build_ui": {
+        "input": 2059,
+        "cached_input": 0,
+        "output": 2814,
+        "cost_usd": "0.0378860",
+        "pricing_evidence_state": "SNAPSHOT_PROVEN",
+        "finish_reason": "stop"
+      },
+      "integration_assembly": {
+        "input": 2765,
+        "cached_input": 0,
+        "output": 2181,
+        "cost_usd": "0.0317020",
+        "pricing_evidence_state": "SNAPSHOT_PROVEN",
+        "finish_reason": "stop"
+      }
+    },
+    "failures": {}
+  }
+}

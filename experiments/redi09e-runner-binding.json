@@ -1,0 +1,10 @@
+{
+  "binding_version": 1,
+  "execution_head": "4d5212383ef08b732e8ec4d9ca5f0b1c4279610e",
+  "execution_policy": "redi09e_live_execution_v1",
+  "note": "forward-only execution-harness binding: the scientific experiment remains REDI-09D (manifest above); this binds exactly which runner code may execute it live",
+  "parent_manifest_hash": "c7d5606c340911fcbf5f2a233ac968de3768b1ef5eae13f108c9c23bc4bfa335",
+  "redi09d_design_commit": "a793bc0784515ebfa7a7c69fb129995d04e8d25d",
+  "runner_path": "scripts/run_redi_09e_live_expansion.py",
+  "runner_sha256": "281c01b3f7d727dcb633f7b66006b641cb5b2160f2d4147e74e069db24e40d3d"
+}

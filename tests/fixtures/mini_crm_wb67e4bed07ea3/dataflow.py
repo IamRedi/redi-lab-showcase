@@ -1,0 +1,27 @@
+"""Job status normalization and transition rules."""
+
+VALID_STATUSES = ("NEW", "ACTIVE", "DONE")
+
+TRANSITIONS = {
+    "NEW": ("ACTIVE",),
+    "ACTIVE": ("DONE",),
+    "DONE": (),
+}
+
+
+def normalize_status(status):
+    """Return a canonical status name or raise ValueError if it is invalid."""
+    if not isinstance(status, str):
+        raise ValueError(f"Invalid job status: {status!r}")
+
+    normalized = status.strip().upper()
+    if normalized not in VALID_STATUSES:
+        raise ValueError(f"Invalid job status: {status!r}")
+    return normalized
+
+
+def can_transition(current_status, new_status):
+    """Return whether a job may move from ``current_status`` to ``new_status``."""
+    current = normalize_status(current_status)
+    new = normalize_status(new_status)
+    return new in TRANSITIONS[current]

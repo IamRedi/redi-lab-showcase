@@ -1,0 +1,23 @@
+# ZANA OpenAI visual worker v1
+
+The ZANA station, ProductSpec and VisualTask remain provider-neutral. `OpenAIVisualWorker` is the replaceable adapter profile `openai_gpt_image_2_visual_v1`. It calls the OpenAI Images API `POST /v1/images/generations` through the repository's existing OpenAI SDK client and `REDI_OPENAI_API_KEY` credential. The model is `gpt-image-2`; the adapter uses `quality=medium`, `output_format=png`, `background=opaque`, and `n=1`. It accepts bounded 16:9, 4:3, 1:1, 3:2 and 2:3 sizes documented in its profile. Unsupported aspect ratios, excessive minimum dimensions and transparent requirements fail before a paid call. The model name is absent from ProductSpec and the station contract.
+
+The adapter sends a short prompt compiled only from the VisualTask's subject, purpose, style, constraints and placement slot. It retains the SHA-256 of that exact provider prompt. Base64 response bytes are retained under the governed run's `visual/` attempt directory before deterministic gates. The manifest records the provider and model, profile, request ID where safe, exact bytes/hash/dimensions, duration, prompt hash, known cost or pending reservation, and independent review. No provider URL is treated as an artifact.
+
+## Authorization and budget
+
+Text and visual calls share the product ceiling and lock. Before any image generation, the adapter checks runtime freshness, the governed key, `REDI_LIVE_PROVIDER=1`, `REDI_ZANA_VISUAL_AUTHORIZED=1`, explicit `REDI_ZANA_VISUAL_CEILING_USD`, and read-only `gpt-image-2` model metadata access. Model metadata access is a preflight signal; only an authorized generation can conclusively establish generation endpoint entitlement.
+
+The v1 medium-quality policy reserves USD 1.00 per image request under both the separate visual ceiling and the overall product ceiling. A `visual_cost_ledger.jsonl` reservation is flushed to disk before the call. The adapter reconciles complete usage at current standard GPT Image 2 token rates: USD 2.50 per million text input tokens, USD 4.00 per million image input tokens, and USD 15.00 per million image output tokens. If the Images API omits complete usage, the reservation remains visible as uncertain billing. Known cost, outstanding reservation and their upper-bound total appear separately in run evidence. Provider failures retain the reservation until billing is established. The existing text provider checks visual reservations before its own calls, including parallel DAG work.
+
+An independent OpenAI vision review uses the existing `gpt-5.6-terra` text/vision model with the retained image and bounded VisualTask criteria. It reserves USD 0.50 under the same product ceiling and records its usage and verdict. It cannot generate or replace an image. A failed or missing review blocks visual acceptance. ZANA's visual call count excludes the reviewer call; the reviewer appears in the existing text-provider call facts and total product cost.
+
+## Prepared smoke run
+
+`python -m scripts.run_zana_openai_smoke` is inert by default. Its fixed prompt asks for one small local page with exactly two required images: `hero_art` at 16:9 and `section_art` at 4:3. A guard rejects a ProductSpec with extra views, visual requirements or variants before any image call. The adapter permits at most three image calls across the run: two intended assets and one recovery. No model switching is authorized.
+
+For this policy, the required **separate visual ceiling is USD 3.00** (three USD 1.00 reservations). The prepared **overall product ceiling is USD 5.00**, leaving USD 2.00 for bounded text production and up to two USD 0.50 independent vision reviews. These are conservative authorization ceilings, not a claim that the provider will bill that amount. The runner fails closed when the remaining ceiling cannot reserve a call.
+
+After the owner explicitly authorizes those ceilings and the credential is present in the running process, set `REDI_LIVE_PROVIDER=1`, `REDI_ZANA_VISUAL_AUTHORIZED=1`, and `REDI_ZANA_VISUAL_CEILING_USD=3.00`, then run `python -m scripts.run_zana_openai_smoke --live --product-ceiling-usd 5.00`. `--check-access` performs only the model metadata request. The full website benchmark is outside this smoke run.
+
+API and pricing basis: [OpenAI Images API reference](https://developers.openai.com/api/reference/cli/resources/images/methods/generate), [GPT Image 2 prompt and parameter guide](https://developers.openai.com/api/docs/guides/image-prompting), [OpenAI API pricing](https://developers.openai.com/api/docs/pricing), and [vision input guide](https://developers.openai.com/api/docs/guides/images-vision).

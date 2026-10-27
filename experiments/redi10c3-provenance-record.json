@@ -1,0 +1,160 @@
+{
+  "bindings": {
+    "call_order": [
+      [
+        "stationery_supply",
+        "baseline_arm"
+      ],
+      [
+        "stationery_supply",
+        "v6_arm"
+      ],
+      [
+        "pharmacy_supply",
+        "baseline_arm"
+      ],
+      [
+        "pharmacy_supply",
+        "v6_arm"
+      ]
+    ],
+    "criteria": {
+      "criteria_v2_met": true,
+      "governor_state": "VALIDATED",
+      "ledger_sha256": "3d8fad30c5338eb09aa698d58c8cbfc3261d1853c8b09610bcdc767c2a73b9bb",
+      "manifest_hash": "0909b83fa23974c15958ab98c2a467c5c3443f680ebd204a404210a6f6743bd5",
+      "source": "persisted executed qualification ledger"
+    },
+    "diff_proof": {
+      "aggregation_commit": "7d8b341",
+      "changed_lines": [
+        "+    first_product_evidence,"
+      ],
+      "execution_path_byte_identical": true,
+      "import_only": true,
+      "live_commit": "7521916"
+    },
+    "executor_aggregation_commit": "7d8b341",
+    "executor_live_commit": "7521916",
+    "governance_ledger_sha256": "3d8fad30c5338eb09aa698d58c8cbfc3261d1853c8b09610bcdc767c2a73b9bb",
+    "governance_ledger_state": "ELIGIBLE_FOR_VALIDATION",
+    "manifest_v2_hash_superseded_lineage": "0d69d86f6ff49d1fcc6c1c85b5ef812edf4df24b2f3adef9a30c8fbf9463b7d9",
+    "manifest_v3_hash": "38e0d83c480ad546d5d78875ad8baf9c9000f733485d8dac1d15384e9c98c937",
+    "recorded_call_facts": [
+      {
+        "arm": "baseline_arm",
+        "cost_usd": "0.000130500",
+        "finish_reason": "stop",
+        "input_tokens": 322,
+        "model": "gpt-4o-mini-2024-07-18",
+        "output_tokens": 137,
+        "position": 1,
+        "product_key": "stationery_supply"
+      },
+      {
+        "arm": "v6_arm",
+        "cost_usd": "0.0093060",
+        "finish_reason": "stop",
+        "input_tokens": 321,
+        "model": "gpt-5.6-terra",
+        "output_tokens": 722,
+        "position": 2,
+        "product_key": "stationery_supply"
+      },
+      {
+        "arm": "baseline_arm",
+        "cost_usd": "0.000130500",
+        "finish_reason": "stop",
+        "input_tokens": 322,
+        "model": "gpt-4o-mini-2024-07-18",
+        "output_tokens": 137,
+        "position": 3,
+        "product_key": "pharmacy_supply"
+      },
+      {
+        "arm": "v6_arm",
+        "cost_usd": "0.0074700",
+        "finish_reason": "stop",
+        "input_tokens": 321,
+        "model": "gpt-5.6-terra",
+        "output_tokens": 569,
+        "position": 4,
+        "product_key": "pharmacy_supply"
+      }
+    ],
+    "replay": {
+      "both_v6_arms_all_gates_pass": true,
+      "digest": "da4de5e1c465560f3a19cedfbcec9d8c5574fc26847d578407a0a5034023903c",
+      "replay_x2_identical": true
+    },
+    "retained_artifacts": {
+      "pharmacy_supply/baseline_arm": {
+        "files_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "workspace_files": {}
+      },
+      "pharmacy_supply/v6_arm": {
+        "files_sha256": "4be8bc3a3a9949599357809bec70958734af9d585c176afa2dab238d00a1bdd3",
+        "workspace_files": {
+          "pharmacy_supply/normalize.py": {
+            "sha256": "676f1517b47582c80496e42747a252aab48235fb00ba4523b6ad536dcfa9bb73",
+            "size": 443
+          },
+          "pharmacy_supply/reorder.py": {
+            "sha256": "014afd422cdb86cf9093dd3b0b145d080ec5e92cbc3d71805a1f220009838486",
+            "size": 656
+          },
+          "pharmacy_supply/service.py": {
+            "sha256": "84102c7a32ba1322078fcf80c3e20d8f1736bfe525f124407d4af5d71f9f1bc6",
+            "size": 545
+          }
+        }
+      },
+      "qualification_ledger": {
+        "sha256": "3d8fad30c5338eb09aa698d58c8cbfc3261d1853c8b09610bcdc767c2a73b9bb",
+        "state": "ELIGIBLE_FOR_VALIDATION"
+      },
+      "stationery_supply/baseline_arm": {
+        "files_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "workspace_files": {}
+      },
+      "stationery_supply/v6_arm": {
+        "files_sha256": "d0289316b14752d2d2c5b179c9b1edf1780c1f02e557fc7be9aeeb88a858259e",
+        "workspace_files": {
+          "stationery_supply/normalize.py": {
+            "sha256": "062b8f9a4dd591068211dbc4416a2f19a95d59f4c8a0daa8fa324fc78c7f4a95",
+            "size": 500
+          },
+          "stationery_supply/reorder.py": {
+            "sha256": "3b91d9f293d705b5ced213b0235df22769f3e107ba6752589e8de704502be74f",
+            "size": 658
+          },
+          "stationery_supply/service.py": {
+            "sha256": "98bf09bf65e8b121d32204bd46030794ad8dafd7fd5c9b9917f82abcc4d510a3",
+            "size": 570
+          }
+        }
+      }
+    },
+    "total_spend_usd": "0.017037000"
+  },
+  "no_backfill_no_history_edit": true,
+  "not_original_live_row_evidence": true,
+  "policy_id": "redi10c3_provenance_reconciliation_v1",
+  "promotion": "none",
+  "provenance_type": "RECOVERED_PROVENANCE",
+  "provider_calls": 0,
+  "record_hash": "c805e4070f93cd41e85198a8524f1eea0a0293987ef18ebbcf98021c95a4df4e",
+  "record_id": "redi10c3_provenance_reconciliation_v1",
+  "record_version": 1,
+  "statements": {
+    "1_live_execution_code": "7521916",
+    "2_aggregation_recovery_code": "7d8b341",
+    "3_diff_only_missing_import": true,
+    "4_execution_path_byte_identical": true,
+    "5_v6_arms_replay_from_retained_bytes_all_gates_pass": true,
+    "6_criteria_v2_met": true,
+    "7_original_live_rows_not_persisted": true,
+    "7_reason": "the post-call aggregation crashed on a missing import (NameError: first_product_evidence) before rows were written; fixed and committed as 7d8b341",
+    "8_recovered_provenance_not_original_live_rows": true
+  }
+}

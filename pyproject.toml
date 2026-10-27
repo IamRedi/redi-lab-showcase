@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redi-lab"
+version = "0.1.0"
+description = "REDI Lab / VIRTUTES — adaptive AI software factory: governed stations, replaceable model workers, quality gates, evidence ledger and replay"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Source-Available (see LICENSE)" }
+authors = [
+    { name = "REDI Lab Research" },
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["redi_lab*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"

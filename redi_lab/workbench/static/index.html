@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>VIRTUTES — Workbench</title>
+<style>/*WORKBENCH_STYLES*/</style>
+</head>
+<body data-surface="home">
+<a class="skip-link" href="#workspace">Skip to workspace</a>
+<header class="app-header">
+<a class="brand" href="/" aria-label="VIRTUTES home"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 38 20 20 38 2 20Z M10 13 20 31 30 13 M20 7v7 M7 20h7 M26 20h7"/></svg><span>VIRTUTES<small>SOFTWARE FACTORY</small></span></a>
+<nav class="desktop-nav" aria-label="Workspace"><button class="nav-button selected" data-surface="home">Overview</button><button class="nav-button" data-surface="run">Factory</button></nav>
+<div class="header-meta"><span class="engine-label">Powered by REDI Lab</span><button id="runtime-info" class="runtime-pill" aria-haspopup="dialog">Local workspace <span class="status-dot"></span></button></div>
+</header>
+<main id="workspace" tabindex="-1">
+<div id="notice" class="notice" role="alert" hidden></div>
+<div id="fixture-banner" class="fixture-banner" hidden>ISOLATED VISUAL FIXTURE · no factory execution</div>
+<div class="workspace-heading"><div><p class="eyebrow" id="run-eyebrow">YOUR WORKSPACE</p><h1 id="run-title">What will you build?</h1><p class="subtle" id="run-subtitle">A clear request. A visible process. A verified result.</p></div><span id="run-state" class="badge">IDLE</span></div>
+<div class="workspace-grid">
+<aside class="intake-column">
+<section class="panel intake-panel" aria-labelledby="intake-title">
+<div class="panel-title"><span class="section-number">01</span><h2 id="intake-title">Build request</h2></div>
+<label for="prompt">What should the product do?</label><textarea id="prompt" placeholder="Describe your product and workflow…" rows="6" required></textarea>
+<p class="field-hint">Include the essentials. You can paste your specification here.</p>
+<details id="build-settings"><summary>Build settings <span aria-hidden="true">＋</span></summary><label for="backend">Execution mode</label><select id="backend"><!--BACKEND_OPTIONS--></select>
+<div id="ceiling-row" hidden><label for="ceiling">Overall product ceiling · USD</label><input id="ceiling" inputmode="decimal" placeholder="5.00" aria-describedby="ceiling-help"><p id="ceiling-help" class="field-hint">Required for a live build. This is the maximum for all provider work and reservations.</p></div>
+<div id="visual-budget-row" hidden><label for="visual-ceiling">Visual ceiling · USD</label><input id="visual-ceiling" inputmode="decimal" placeholder="3.00" aria-describedby="visual-ceiling-help"><p id="visual-ceiling-help" class="field-hint">Required when ZANA may use the real visual provider. Must fit within the overall ceiling.</p>
+<details id="visual-advanced"><summary>Advanced visual limits</summary><label for="max-visual-calls">Maximum visual generation calls</label><input id="max-visual-calls" type="number" min="1" max="3" step="1" value="3"><label for="max-visual-recovery">Maximum visual recovery generations</label><input id="max-visual-recovery" type="number" min="0" max="2" step="1" value="1"></details></div>
+<p class="field-hint" id="backend-help">The selected mode is sent to the existing factory.</p></details>
+<button id="build" class="button primary full">BUILD <span aria-hidden="true">↗</span></button><p id="request-status" role="status" class="field-hint"></p></section>
+<section class="panel saved-panel" aria-labelledby="saved-title"><div class="panel-title"><span class="section-number">02</span><h2 id="saved-title">Retained runs</h2></div><label for="saved-build">Choose a build</label><select id="saved-build"></select><button id="view-build" class="button secondary full">View run <span aria-hidden="true">→</span></button></section>
+<section id="overview" class="panel overview-panel" aria-labelledby="overview-title"><div class="panel-title"><h2 id="overview-title">Factory overview</h2><span id="crew-active" class="subtle">—</span></div><p id="overview-copy" class="subtle">Your run will appear here.</p><div id="compact-crew" class="compact-crew"></div><button class="button secondary full mobile-only" data-surface="run">Run details <span aria-hidden="true">→</span></button></section>
+<p class="intake-footnote">Execution is evidence-led.<br>Every state has a reason.</p></aside>
+<div class="factory-column">
+<section class="panel factory-panel" aria-labelledby="factory-title"><div class="factory-heading"><div><p class="eyebrow">EXECUTION</p><h2 id="factory-title">Factory View</h2></div><div class="graph-controls" aria-label="Graph controls"><button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button><button id="zoom-in" title="Zoom in" aria-label="Zoom in">＋</button><button id="fit-graph" title="Fit graph">Fit</button><button id="graph-list" title="Show structured task list" aria-pressed="false">List</button></div></div>
+<section id="result" class="panel result-panel" hidden aria-labelledby="verdict"><div class="result-heading"><span id="result-icon" class="result-icon" aria-hidden="true">✓</span><div><p id="result-kicker" class="eyebrow">VERIFIED DELIVERY</p><h2 id="verdict">APP READY</h2></div></div>
+<div id="launch-actions" hidden><button id="open-app" class="button success">OPEN APP <span aria-hidden="true">↗</span></button><p id="launch-status" role="status" class="field-hint"></p></div>
+<section id="owner-decision-panel" class="owner-decision-panel" aria-labelledby="owner-decision-title" hidden><h3 id="owner-decision-title">OWNER DECISION</h3><p id="owner-decision-reason"></p><p id="owner-decision-context" class="field-hint"></p><div id="owner-decision-fields"></div><label for="owner-decision-note">Owner note (optional)</label><textarea id="owner-decision-note" rows="2" maxlength="4000"></textarea><div class="owner-decision-actions"><button id="submit-owner-decision" type="button" class="button primary">Record decision</button><button id="resume-run" type="button" class="button secondary" hidden>RESUME RUN</button></div><p id="owner-decision-status" role="status" class="field-hint"></p><ol id="owner-segment-history" class="event-list"></ol></section>
+<details id="delivery-details"><summary>Details <span aria-hidden="true">＋</span></summary><p id="result-summary"></p><div id="result-instruments" class="result-instruments"></div><div id="gate-results" class="gate-list"></div><div id="launch" hidden><h3>Local URL</h3><p id="app-url" class="subtle"></p><h3>Project path</h3><code id="app-path"></code><h3>Launch command · PowerShell</h3><code id="launch-command"></code><button id="stop-app" class="button secondary">Stop app</button></div><div id="failure-details"></div><p id="participating-personas" class="subtle"></p></details></section>
+<p id="graph-provenance" class="graph-provenance">The execution graph appears when a plan is recorded.</p><div id="graph-viewport" class="graph-viewport" tabindex="0" aria-label="Execution graph. Drag or use arrow keys to pan; use zoom and fit controls."><div id="graph-stage"><svg id="graph-edges" aria-hidden="true"></svg><div id="graph-nodes"></div></div></div><div id="task-list" class="task-list" hidden></div>
+<div id="graph-empty" class="empty-state"><span class="empty-mark" aria-hidden="true">◇</span><h3>Space for your next product</h3><p>Submit a request to begin.<br>The factory will reveal its plan as it works.</p></div>
+<section id="factory-checks" class="factory-checks" aria-label="Selected run final gates" hidden></section><div class="graph-footer"><span><i class="legend-dot working"></i>Working</span><span><i class="legend-dot verified"></i>Verified</span><span><i class="legend-dot waiting"></i>Waiting</span><span class="graph-hint">Select a task to inspect</span></div></section></div>
+<aside class="context-column panel" aria-labelledby="context-title"><div class="panel-title"><span class="section-number">03</span><h2 id="context-title">Live context</h2><span id="context-state" class="status-dot"></span></div>
+<div class="tabs" role="tablist" aria-label="Run information"><button role="tab" id="tab-now" aria-controls="pane-now" aria-selected="true" tabindex="0">Now</button><button role="tab" id="tab-activity" aria-controls="pane-activity" aria-selected="false" tabindex="-1">Activity</button><button role="tab" id="tab-logs" aria-controls="pane-logs" aria-selected="false" tabindex="-1">Logs</button><button role="tab" id="tab-files" aria-controls="pane-files" aria-selected="false" tabindex="-1">Files</button><button role="tab" id="tab-evidence" aria-controls="pane-evidence" aria-selected="false" tabindex="-1">Evidence</button></div>
+<section id="pane-now" role="tabpanel" aria-labelledby="tab-now"><div id="current-task" class="current-task"><p class="eyebrow">CURRENT ACTIVITY</p><h3>Ready when you are</h3><p class="subtle">No run selected. Start a build or revisit a retained result.</p></div><div class="activity-heading"><h3>Recent activity</h3><span id="event-count" class="subtle">—</span></div><ol id="events" class="event-list"><li class="subtle">Recorded events will appear here.</li></ol></section>
+<section id="pane-activity" role="tabpanel" aria-labelledby="tab-activity" hidden><h3>Recorded activity</h3><ol id="activity-events" class="event-list"></ol></section>
+<section id="pane-logs" role="tabpanel" aria-labelledby="tab-logs" hidden><h3>Recorded events</h3><pre id="logs">No recorded events.</pre></section>
+<section id="pane-files" role="tabpanel" aria-labelledby="tab-files" hidden><h3>Retained artifacts</h3><p class="field-hint">Paths in the selected build. Open the project from its verified Result.</p><ul id="files" class="file-list"></ul></section>
+<section id="pane-evidence" role="tabpanel" aria-labelledby="tab-evidence" hidden><h3>Run evidence</h3><div id="evidence-details" class="evidence-details">Select a run to inspect its evidence.</div><h3>Instrumentation</h3><dl id="metrics" class="metric-list"></dl><button id="inspect-state" class="button secondary">Inspect snapshot</button></section></aside>
+</div></main>
+<footer class="telemetry" aria-label="Run telemetry"><span class="telemetry-title"><span class="tiny-emblem" aria-hidden="true">◇</span>Run telemetry</span><div id="telemetry-values"><span class="subtle">No run selected</span></div></footer>
+<nav class="mobile-navigation" aria-label="Mobile workspace"><button class="selected" data-surface="home"><span aria-hidden="true">⌂</span>Home</button><button data-surface="run"><span aria-hidden="true">◇</span>Run details</button></nav>
+<dialog id="panel-dialog" aria-labelledby="panel-dialog-title"><div class="dialog-header"><h2 id="panel-dialog-title">Details</h2><button id="close-panel-dialog" class="button secondary" autofocus>Close</button></div><div id="panel-dialog-content"></div></dialog>
+<dialog id="inspector" aria-labelledby="inspector-title"><div class="dialog-header"><h2 id="inspector-title">Run evidence</h2><button id="close-inspector" class="button secondary" autofocus>Close</button></div><pre id="inspector-content"></pre></dialog>
+<div id="state-announcement" class="sr-only" role="status" aria-live="polite"></div>
+<script>
+//WORKBENCH_SCRIPT
+</script>
+</body></html>

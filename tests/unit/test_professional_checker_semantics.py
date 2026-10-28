@@ -104,3 +104,25 @@ def test_filtered_board_metrics_follow_runtime_placement():
     moved = copy.deepcopy(spec)
     moved['navigation'] = [view['id'] for view in spec['views'] if view['id'] != board['id']] + [board['id']]
     assert presentation_contract(moved)[board['id']]['metrics'] is False
+
+
+def test_referenced_parent_deletion_criterion_maps_to_delete_block():
+    if not (ROOT / 'build/workbench-builds/wb-6f4a8ab91ec6/product_spec.json').is_file():
+        pytest.skip('retained ProductSpec is not available')
+    spec = workshop_spec()
+    spec['acceptance_criteria'] = ['Deleting a series that is referenced by a child record is prevented by referential integrity.']
+    assert 'relationship_delete_block' in assertion_ids(spec)
+    assert not any(key.startswith('unmapped_acceptance') for key in assertion_ids(spec))
+
+
+def test_optional_date_check_needs_an_optional_date_field():
+    if not (ROOT / 'build/workbench-builds/wb-6f4a8ab91ec6/product_spec.json').is_file():
+        pytest.skip('retained ProductSpec is not available')
+    spec = workshop_spec()
+    spec['acceptance_criteria'] = ['A user can create videos with a planned date and optional notes.']
+    dates = [f for e in spec['entities'] for f in e['fields'] if f['type'] == 'date']
+    assert dates, 'fixture needs a date field'
+    for field in dates: field['required'] = False
+    assert 'optional_date' in assertion_ids(spec)
+    for field in dates: field['required'] = True  # a required date cannot be observed accepting empty input
+    assert 'optional_date' not in assertion_ids(spec)

@@ -87,7 +87,7 @@ on desktop and mobile, with budget controls, per-task telemetry and an
 
 - A **Mini CRM** built end to end by the factory line.
 - A **multi-station parallel live run** across a dependency DAG.
-- **969 tests**, passing on Windows and Linux without extra settings.
+- **974 tests**, passing on Windows and Linux without extra settings.
 - **Zero runtime dependencies**: Python standard library only (Python 3.11+).
 
 ## Getting started

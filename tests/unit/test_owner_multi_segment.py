@@ -203,3 +203,13 @@ def test_second_decision_form_renders_in_chromium(tmp_path, monkeypatch):
     finally:
         http.shutdown()
         http.server_close()
+
+
+def test_runtime_comparison_ignores_checkout_line_endings(tmp_path):
+    lf, crlf = tmp_path / 'lf.py', tmp_path / 'crlf.py'
+    lf.write_bytes(b'def render():\n    return 1\n')
+    crlf.write_bytes(b'def render():\r\n    return 1\r\n')
+    assert continuation.runtime_text_hash(lf) == continuation.runtime_text_hash(crlf)
+    changed = tmp_path / 'changed.py'
+    changed.write_bytes(b'def render():\n    return 2\n')
+    assert continuation.runtime_text_hash(lf) != continuation.runtime_text_hash(changed)

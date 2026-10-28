@@ -192,3 +192,54 @@ def test_budget_fields_are_owner_facing_and_never_in_prompt_parsing():
     assert "body.visual_ceiling_usd=visual" in js
     assert "body.max_visual_generation_calls=calls" in js
     assert "body.max_visual_recovery_generations=recovery" in js
+
+
+def test_zero_visual_ceiling_is_an_explicit_visuals_off_authorization():
+    from pytest import raises
+    from redi_lab.workbench.build_budget import visuals_disabled
+    args = dict(overall_ceiling="0.95", visual_ceiling="0", max_visual_calls=3,
+                max_visual_recovery=1, visual_required=True, runtime=_runtime(),
+                credential_present=True, live_arm=True, visual_arm=False)
+    record = make_authorization("a" * 12, "openai-live-professional-product-v1", **args)
+    assert record["visual_ceiling_usd"] == "0.00" and record["visuals_disabled"] is True
+    assert record["max_visual_generation_calls"] == 0 and record["max_visual_recovery_generations"] == 0
+    assert visuals_disabled(record)
+    telemetry = budget_telemetry(record, total_spent="0.40")
+    assert telemetry["remaining_visual_usd"] == "0.00" and telemetry["remaining_total_usd"] == "0.55"
+    for value in ("0.0", "0.00"):
+        assert make_authorization("a" * 12, "openai-live-professional-product-v1",
+                                  **{**args, "visual_ceiling": value})["visuals_disabled"] is True
+    # Any enabled visual budget still reserves at least USD 1.00 for the next visual call.
+    with raises(ValueError, match="at least USD 1.00"):
+        make_authorization("a" * 12, "openai-live-professional-product-v1",
+                           **{**args, "overall_ceiling": "2.00", "visual_ceiling": "0.50"})
+    enabled = make_authorization("a" * 12, "openai-live-professional-product-v1",
+                                 **{**args, "overall_ceiling": "2.00", "visual_ceiling": "1.00"})
+    assert not visuals_disabled(enabled) and enabled["visuals_disabled"] is False
+
+
+def test_visuals_off_build_runs_without_zana_arm_or_visual_worker(tmp_path, monkeypatch):
+    from redi_lab.workbench import engine
+    from redi_lab.workbench.professional import pipeline
+    monkeypatch.setattr(engine, "WORKBENCH_ROOT", tmp_path)
+    monkeypatch.setenv("REDI_OPENAI_API_KEY", "offline-test-key")
+    monkeypatch.setenv("REDI_LIVE_PROVIDER", "1")
+    monkeypatch.delenv("REDI_ZANA_VISUAL_AUTHORIZED", raising=False)
+    observed = {}
+
+    def fake_run(self):
+        observed.update(visual_worker=self.visual_worker, reviewer=self.visual_reviewer,
+                        overall=str(self.provider.ceiling))
+        return {"status": "OWNER_ACTION_REQUIRED", "verified": False, "component_map": {},
+                "detail": "offline inspection only", "provider_calls": 0, "total_cost_usd": "0"}
+
+    monkeypatch.setattr(pipeline.ProfessionalRunner, "run", fake_run)
+    adapter = engine.WorkbenchAdapter()
+    result = adapter.start_build("Workshop job tracker", backend="openai-live-professional-product-v1",
+                                 ceiling="0.95", visual_ceiling="0", max_visual_calls=3, max_visual_recovery=1)
+    adapter._builds[result["build_id"]]._thread.join(10)
+    assert observed == {"visual_worker": None, "reviewer": None, "overall": "0.95"}
+    snap = adapter.snapshot(result["build_id"])
+    assert "REDI_ZANA_VISUAL_AUTHORIZED" not in (snap.get("detail") or "")
+    assert snap["budget_telemetry"]["authorized_visual_usd"] == "0.00"
+

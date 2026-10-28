@@ -25,7 +25,7 @@ from .crew import crew_snapshot
 from .runtime_identity import (
     StaleRuntimeError, normal_app_runtime_status, require_current_normal_app_runtime,
 )
-from .build_budget import make_authorization, write_authorization, read_authorization, budget_telemetry
+from .build_budget import make_authorization, write_authorization, read_authorization, budget_telemetry, visuals_disabled
 
 AGENT_LAYER_LABEL = "VIRTUTES"
 
@@ -122,14 +122,15 @@ class WorkbenchBuild:
                                      "decision_needed":"Configure the missing preflight requirements: "+", ".join(missing), "attempted":[],"stronger_profile_used":False},
                                  "detail": "Professional build requires credential, live flag and owner ceiling", "provider_calls": 0}
                 else:
-                    if not self.client_factory and (not self.authorization["visual_ceiling_usd"] or
+                    no_visuals = visuals_disabled(self.authorization)
+                    if not self.client_factory and not no_visuals and (not self.authorization["visual_ceiling_usd"] or
                             os.environ.get('REDI_ZANA_VISUAL_AUTHORIZED') != '1'):
                         raise ValueError('Professional visual build requires an owner visual ceiling and REDI_ZANA_VISUAL_AUTHORIZED=1 before provider use')
                     provider = GovernedProvider(self.key, self.ceiling, self.client_factory)
                     self._professional_provider = provider
                     run_root = WORKBENCH_ROOT / f"wb-{self.build_id}"
                     visual_worker = visual_reviewer = None
-                    if not self.client_factory:
+                    if not self.client_factory and not no_visuals:
                         from .professional.openai_visual import OpenAIVisualWorker, OpenAIVisualReviewer
                         visual_worker = OpenAIVisualWorker(provider, run_root,
                             visual_ceiling=self.authorization['visual_ceiling_usd'],

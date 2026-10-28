@@ -40,7 +40,11 @@ def make_authorization(build_id, backend, *, overall_ceiling, visual_ceiling=Non
     overall = _money(overall_ceiling, "overall product ceiling")
     visual = None
     calls = recovery = None
-    if visual_required or visual_ceiling is not None:
+    if isinstance(visual_ceiling, str) and re.fullmatch(r"0(?:\.0{1,2})?", visual_ceiling):
+        # Explicit owner choice: no ZANA visual provider for this build. Visual
+        # tasks then fail closed as EXTERNAL_SERVICE_REQUIRED; nothing is spent.
+        visual, calls, recovery = "0.00", 0, 0
+    elif visual_required or visual_ceiling is not None:
         visual = _money(visual_ceiling, "visual ceiling")
         if Decimal(visual) > Decimal(overall):
             raise ValueError("Visual ceiling cannot exceed the overall product ceiling.")
@@ -52,10 +56,16 @@ def make_authorization(build_id, backend, *, overall_ceiling, visual_ceiling=Non
             "backend": backend, "created_at": time.time(),
             "overall_ceiling_usd": overall, "visual_ceiling_usd": visual,
             "max_visual_generation_calls": calls, "max_visual_recovery_generations": recovery,
+            "visuals_disabled": visual == "0.00",
             "runtime_identity": {"fingerprint": runtime["fingerprint"], "source_contract": runtime["source_contract"],
                                  "fresh_at_authorization": runtime["fresh"], "changed_files": runtime["changed_files"]},
             "authorization_state": {"credential_present": bool(credential_present),
                                     "live_arm": bool(live_arm), "visual_arm": bool(visual_arm)}}
+
+
+def visuals_disabled(record):
+    """True when the owner explicitly authorized this build without visual provider calls."""
+    return record.get("visual_ceiling_usd") == "0.00" and record.get("max_visual_generation_calls") == 0
 
 
 def write_authorization(root, record):

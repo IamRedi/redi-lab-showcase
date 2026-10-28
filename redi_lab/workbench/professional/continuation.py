@@ -55,6 +55,15 @@ def _hash(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def runtime_text_hash(path):
+    """Hash runtime source as text, the same way requalification and packaging read it.
+
+    A Windows checkout may hold CRLF bytes while packages hold LF; line endings
+    alone must not look like a shared-runtime change.
+    """
+    return hashlib.sha256(Path(path).read_text(encoding='utf-8').encode()).hexdigest()
+
+
 def segment_id(index):
     return f'{index:04d}'
 
@@ -552,9 +561,9 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
     else:
         if progress: progress('product_review_started')
         spec = evidence['product_spec']
-        old_runtime = _hash(base / 'app' / 'product_app' / 'runtime.py')
+        old_runtime = runtime_text_hash(base / 'app' / 'product_app' / 'runtime.py')
         from . import runtime as shared_runtime
-        new_runtime = _hash(shared_runtime.__file__)
+        new_runtime = runtime_text_hash(shared_runtime.__file__)
         requalified = None
         episodes = list(evidence['recovery_episodes'])
         if old_runtime != new_runtime:

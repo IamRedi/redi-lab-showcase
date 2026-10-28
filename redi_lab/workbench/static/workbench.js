@@ -32,7 +32,8 @@ async function startBuild(){
  if(backend.startsWith('openai-live')){const ceiling=$('ceiling').value.trim();if(!money(ceiling)){$('build-settings').open=true;notice('Enter a positive overall product ceiling in USD.');$('ceiling').focus();return;}body.cost_ceiling_usd=ceiling;}
  if(backend==='openai-live-professional-product-v1'){
   const visual=$('visual-ceiling').value.trim(),calls=Number($('max-visual-calls').value),recovery=Number($('max-visual-recovery').value);
-  if(!money(visual)||Number(visual)>Number(body.cost_ceiling_usd)||Number(visual)<1){$('build-settings').open=true;notice('Enter a visual ceiling of at least USD 1.00 that does not exceed the overall ceiling.');$('visual-ceiling').focus();return;}
+  const visualsOff=/^0(?:\.0{1,2})?$/.test(visual);
+  if(!visualsOff&&(!money(visual)||Number(visual)>Number(body.cost_ceiling_usd)||Number(visual)<1)){$('build-settings').open=true;notice('Enter 0 to build without visuals, or a visual ceiling of at least USD 1.00 that does not exceed the overall ceiling.');$('visual-ceiling').focus();return;}
   if(!Number.isInteger(calls)||calls<1||calls>3||!Number.isInteger(recovery)||recovery<0||recovery>=calls){$('build-settings').open=true;$('visual-advanced').open=true;notice('Visual calls must be 1–3; recovery generations must be 0 through one less than the call limit.');$('max-visual-calls').focus();return;}
   body.visual_ceiling_usd=visual;body.max_visual_generation_calls=calls;body.max_visual_recovery_generations=recovery;
  }

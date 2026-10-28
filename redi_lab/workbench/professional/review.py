@@ -146,8 +146,8 @@ criterion is silently dropped. Prohibited deletion overrides general CRUD.
         if (re.search(r'back to.*earlier|earlier stage|move.*back',lower) and not NEGATED_REVERSE.search(lower)
                 and not NEGATED_REVERSE_SHORT.search(lower) and any(has_reverse_transition(f) for f in spec['workflows'])):
             selected += ['workflow_reverse']
-        if re.search(r'delet.*(contain|depend|linked|while it still has)',lower):
-            subject = re.split(r'\b(?:contain\w*|with|linked|depend\w*)\b',lower,maxsplit=1)[0]
+        if re.search(r'delet.*(contain|depend|linked|referenc|child record|while it still has)',lower):
+            subject = re.split(r'\b(?:contain\w*|with|linked|depend\w*|referenc\w*)\b',lower,maxsplit=1)[0]
             for parent in spec['entities']:
                 if any(field.get('references')==parent['id'] for child in spec['entities'] for field in child['fields']):
                     labels=(parent['label'].lower(),parent['plural'].lower())
@@ -163,7 +163,9 @@ criterion is silently dropped. Prohibited deletion overrides general CRUD.
         if any(w in lower for w in ('responsive',' ui','states')):
             selected += ['responsive','mobile_controls','overflow'] + [r['requirement_id'] for r in rows if r['requirement_id'].startswith('state:') and r['applicability']=='REQUIRED']
         if 'calculat' in lower and spec.get('calculator'): selected += ['calculator']
-        if re.search(r'empty|optional|without', lower) and re.search(r'date', lower):
+        # Only an optional date field can be observed as accepting empty input.
+        if (re.search(r'empty|optional|without', lower) and re.search(r'date', lower)
+                and any(f['type'] == 'date' and not f.get('required') for e in spec['entities'] for f in e['fields'])):
             selected += ['optional_date']
         if re.search(r'blank|whitespace', lower) and re.search(r'title|name|text', lower):
             selected += ['required_text_validation']

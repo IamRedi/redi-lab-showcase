@@ -9,51 +9,63 @@ gates and leaves evidence that can be replayed and audited later.
 
 ## See it work
 
+![Workshop Job Tracker built live from scratch](docs/media/workshop-live-app-ready.gif)
+
+This recording ([MP4](docs/media/workshop-live-app-ready.mp4), sped up) is a **real-provider build from
+scratch**. One request for a car-repair **Workshop Job Tracker** went in, and a verified, runnable app came
+out. The build took 7 model calls, about 40k tokens and **USD 0.16**, with visuals off.
+
+1. **Ora** planned the product and paused once for an owner decision on points the brief left open.
+2. **Andinus** (data) and **Bindus** (workflow) built in parallel, then **Agron** (business logic),
+   **Teuta** (UI) and **Gentius** (assembly). All six frozen gates passed.
+3. **Medaurus**, the independent reviewer, left two prose criteria without an observable check. The owner
+   authorized a provider-free evaluator repair on the same run, and the review then passed **52/52**
+   real browser observations, including "jobs cannot move backward" and "phone numbers need not be unique".
+4. The app was opened and used with real data: customers, vehicles and repair jobs moved
+   new → in progress → done. The dashboard shows 2 open jobs and EUR 185.00 revenue from done jobs.
+
+| Personas working in parallel | APP READY: every station verified |
+| --- | --- |
+| ![Personas working](docs/media/workshop-personas-working.png) | ![Factory view](docs/media/workshop-factory-app-ready.png) |
+| **Generated app: repair-job board** | **Generated app: dashboard** |
+| ![Repair jobs board](docs/media/workshop-app-board.png) | ![Dashboard](docs/media/workshop-app-dashboard.png) |
+| **Evidence and instrumentation** | **Generated app on mobile** |
+| ![Evidence](docs/media/workshop-evidence.png) | <img src="docs/media/workshop-app-mobile.png" width="260" alt="Generated app on mobile"> |
+
+### Another example: ILIRIA
+
 ![VIRTUTES demo](docs/media/virtutes-demo.gif)
 
-The demo (full-quality [MP4](docs/media/virtutes-demo.mp4)) opens a retained real-provider build, **ILIRIA**,
-in the Workbench. ILIRIA is a creative production board that the Professional product factory built
-from one request in 6 model calls, about 49k tokens, USD 0.15 and 1 min 14 s. The demo then
-opens the generated app and creates real records. The app enforces its own workflow: new videos
-must start in *Idea* and move forward stage by stage.
+The [ILIRIA demo](docs/media/virtutes-demo.mp4) replays a retained real-provider build, a creative
+production board built in 6 model calls for USD 0.15. It then creates real records in the generated app,
+which enforces its own workflow: new videos must start in *Idea* and move forward stage by stage.
 
-| Factory view: every station verified | Evidence and instrumentation |
+| Factory view | The generated app with real records |
 | --- | --- |
-| ![Factory view](docs/media/factory-app-ready.png) | ![Evidence](docs/media/evidence.png) |
-| **The generated app with real records** | **Mobile Workbench** |
-| ![Generated app](docs/media/generated-app-board.png) | <img src="docs/media/mobile-workbench.png" width="260" alt="Mobile Workbench"> |
+| ![Factory view](docs/media/factory-app-ready.png) | ![Generated app](docs/media/generated-app-board.png) |
 
-### Governance in action: live builds from scratch
+### Governance in action
 
-![Live build of a workshop job tracker](docs/media/live-build-workshop.gif)
-
-This recording ([MP4](docs/media/live-build-workshop.mp4), sped up 3×) is a real-provider build from
-scratch of a car-repair **Workshop Job Tracker**. It did **not** reach APP READY, and the factory said
-so instead of shipping. Across four live runs, totalling USD 1.03 of real spend under a USD 2.00 owner
-budget, the line:
+Getting the workshop app to APP READY took seven live runs (USD 1.34 in total under a USD 2.00 owner
+budget). The earlier runs stopped honestly instead of shipping:
 
 - **Paused for the owner.** Ora stopped planning whenever the brief left something open. Each answer
-  becomes a new append-only segment of the same run, hash-chained to the previous one, and there can be
-  any number of them. One run went through four owner decisions in a row.
-- **Built in parallel, live.** Andinus (data) and Bindus (workflow) worked at the same time, then Agron
-  and Teuta. The factory graph and crew update from the running worker, also inside a resumed segment.
-- **Refused to fake a pass.** Teuta's UI was checked in a real browser. When a check failed, the line
-  tried a same-station correction and then a stronger worker, and finally stopped with the exact failed
-  assertion as evidence.
+  becomes a new append-only, hash-chained segment of the same run, and there can be any number of them.
+  One run went through four owner decisions in a row.
+- **Live graph.** The factory graph and crew update from the running worker, also inside a resumed segment.
+- **Refused to fake a pass.** When a real-browser check failed, the line tried a same-station correction
+  and then a stronger worker, and finally stopped with the exact failed assertion as evidence.
 
-These runs exposed three defects in the factory's own checks, and they are fixed with tests:
+Those stops exposed defects in the factory's own checks, and each is fixed with tests:
 - Empty boards rendered no workflow columns.
-- A prohibition ("cannot / not move backward") was read as a required reverse move.
-- Board summaries were expected where the renderer never places them.
+- Prohibitions such as "cannot move backward" were read as required reverse moves.
+- Summaries were expected where the renderer never places them.
+- Several prose criteria had no observable check.
+- Windows line endings made an unchanged runtime look modified.
 
-The last run used the final remaining budget before the reverse-move fix existed, so a passing live
-build of this app is still outstanding.
-
-| Personas working in parallel | Third owner decision in one run |
+| Third owner decision in one run | Stopped with exact evidence |
 | --- | --- |
-| ![Personas working](docs/media/live-personas-working.png) | ![Owner decision](docs/media/live-third-owner-decision.png) |
-| **Live graph inside a resumed segment** | **Stopped with exact evidence** |
-| ![Live continuation graph](docs/media/live-graph-continuation.png) | ![Teuta blocked](docs/media/live-teuta-blocked.png) |
+| ![Owner decision](docs/media/live-third-owner-decision.png) | ![Teuta blocked](docs/media/live-teuta-blocked.png) |
 
 ## Core ideas
 
@@ -85,9 +97,9 @@ on desktop and mobile, with budget controls, per-task telemetry and an
 
 ## Proven results
 
-- A **Mini CRM** built end to end by the factory line.
+- A **Workshop Job Tracker** built live from scratch to APP READY (USD 0.16), plus a **Mini CRM** built end to end.
 - A **multi-station parallel live run** across a dependency DAG.
-- **974 tests**, passing on Windows and Linux without extra settings.
+- **976 tests**, passing on Windows and Linux without extra settings.
 - **Zero runtime dependencies**: Python standard library only (Python 3.11+).
 
 ## Getting started

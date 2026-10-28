@@ -46,6 +46,20 @@ NEGATED_REVERSE = re.compile(r"(cannot|can't|can not|must not|may not|never|not 
 NEGATED_REVERSE_SHORT = re.compile(r"\b(not|never)\s+(back|backward)\b")
 
 
+NON_UNIQUE = re.compile(r"without (a |any )?uniqueness|not (required to be |need to be )?unique|need not be unique|"
+                        r"duplicates? (are |is )?(allowed|accepted)|may (repeat|be duplicated)")
+
+
+def non_unique_field(spec, lower):
+    """The declared non-unique text field a criterion names; mirrors the browser journey."""
+    for entity in spec['entities']:
+        for field in entity['fields']:
+            if (field['type'] in ('text', 'long_text') and not field.get('unique') and field['id'] != entity['display_field']
+                    and (str(field.get('label') or '').lower() in lower or field['id'].replace('_', ' ') in lower)):
+                return entity['id'], field['id']
+    return None
+
+
 def has_reverse_transition(flow):
     """True when declared transitions lead from a later stage back to an earlier one."""
     order = {stage: index for index, stage in enumerate([flow["initial"], *flow["transitions"]])}
@@ -146,6 +160,11 @@ criterion is silently dropped. Prohibited deletion overrides general CRUD.
         if (re.search(r'back to.*earlier|earlier stage|move.*back',lower) and not NEGATED_REVERSE.search(lower)
                 and not NEGATED_REVERSE_SHORT.search(lower) and any(has_reverse_transition(f) for f in spec['workflows'])):
             selected += ['workflow_reverse']
+        if ((NEGATED_REVERSE.search(lower) or NEGATED_REVERSE_SHORT.search(lower))
+                and any(not has_reverse_transition(f) for f in spec['workflows'])):
+            selected += ['workflow_forward_only'] + ['workflow:'+f['entity'] for f in spec['workflows']]
+        if NON_UNIQUE.search(lower) and non_unique_field(spec, lower):
+            selected += ['non_unique_text']
         if re.search(r'delet.*(contain|depend|linked|referenc|child record|while it still has)',lower):
             subject = re.split(r'\b(?:contain\w*|with|linked|depend\w*|referenc\w*)\b',lower,maxsplit=1)[0]
             for parent in spec['entities']:

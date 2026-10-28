@@ -126,3 +126,33 @@ def test_optional_date_check_needs_an_optional_date_field():
     assert 'optional_date' in assertion_ids(spec)
     for field in dates: field['required'] = True  # a required date cannot be observed accepting empty input
     assert 'optional_date' not in assertion_ids(spec)
+
+
+def test_forward_only_and_non_unique_criteria_map_to_observations():
+    if not (ROOT / 'build/workbench-builds/wb-6f4a8ab91ec6/product_spec.json').is_file():
+        pytest.skip('retained ProductSpec is not available')
+    spec = workshop_spec()
+    spec['workflows'] = [FORWARD_FLOW]
+    assert {'workflow_forward_only', 'workflow:video'} <= assertion_ids(spec)
+    spec['workflows'] = [REVERSIBLE_FLOW]  # a reversible workflow cannot be observed as forward-only
+    assert 'workflow_forward_only' not in assertion_ids(spec)
+    spec['acceptance_criteria'] = ['Video short description is accepted without a uniqueness constraint.']
+    assert 'non_unique_text' in assertion_ids(spec)
+    spec['acceptance_criteria'] = ['Unknown values are accepted without a uniqueness constraint.']
+    assert 'non_unique_text' not in assertion_ids(spec)
+
+
+LIVE_WORKSHOP = ROOT / 'build/workbench-builds/wb-90fbc2a2a919/segments/0001'
+
+
+@pytest.mark.skipif(not (LIVE_WORKSHOP / 'app').is_dir(), reason='retained live workshop package is not available')
+def test_live_workshop_package_is_observed_forward_only_and_non_unique(tmp_path, monkeypatch):
+    from redi_lab.workbench.professional.acceptance import collect
+    monkeypatch.setenv('REDI_CHROMIUM_SANDBOX_WORKAROUND', '1')
+    spec = json.loads((LIVE_WORKSHOP / 'product_spec.json').read_text(encoding='utf-8'))['spec']
+    shutil.copytree(LIVE_WORKSHOP / 'app', tmp_path / 'app', ignore=shutil.ignore_patterns('data'))
+    review = collect(tmp_path / 'app', spec, 'wb-checker-test', tmp_path / 'acceptance')['review']
+    assert review['verdict'] == 'PASS', review['unresolved']
+    rows = {row['requirement_id']: row for row in review['criteria']}
+    assert 'workflow_forward_only' in rows['acceptance:5']['assertion_ids'] and rows['acceptance:5']['status'] == 'PASS'
+    assert rows['acceptance:8']['assertion_ids'] == ['non_unique_text'] and rows['acceptance:8']['status'] == 'PASS'

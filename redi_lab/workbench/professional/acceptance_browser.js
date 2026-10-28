@@ -40,6 +40,9 @@ const NEGATED_REVERSE=/(cannot|can't|can not|must not|may not|never|not allowed 
 const NEGATED_REVERSE_SHORT=/\b(not|never)\s+(back|backward)\b/;
 // The structured workflow wins: a reverse obligation needs declared reverse transitions.
 const hasReverseTransition=flow=>{const order=[flow.initial,...Object.keys(flow.transitions)];return Object.entries(flow.transitions).some(([from,targets])=>targets.some(to=>order.indexOf(to)>-1&&order.indexOf(to)<order.indexOf(from)));};
+const backwardForbidden=()=>spec.acceptance_criteria.some(text=>{const lower=text.toLowerCase();return NEGATED_REVERSE.test(lower)||NEGATED_REVERSE_SHORT.test(lower);});
+const NON_UNIQUE=/without (a |any )?uniqueness|not (required to be |need to be )?unique|need not be unique|duplicates? (are |is )?(allowed|accepted)|may (repeat|be duplicated)/;
+const nonUniqueField=()=>{for(const text of spec.acceptance_criteria){const lower=text.toLowerCase();if(!NON_UNIQUE.test(lower))continue;for(const ent of spec.entities)for(const f of ent.fields)if(['text','long_text'].includes(f.type)&&!f.unique&&f.id!==ent.display_field&&(lower.includes(String(f.label||'').toLowerCase())||lower.includes(f.id.replaceAll('_',' '))))return {ent,f};}return null;};
 const reverseRequired=flow=>hasReverseTransition(flow)&&spec.acceptance_criteria.some(text=>{const lower=text.toLowerCase();return /back to.*earlier|earlier stage|move.*back/.test(lower)&&!NEGATED_REVERSE.test(lower)&&!NEGATED_REVERSE_SHORT.test(lower);});
 const collectionIds=()=>[...d().querySelectorAll('.record-card a[href*="id="],tbody a[href*="id="]')].map(el=>Number(new URL(el.href).searchParams.get('id'))).sort((a,b)=>a-b);
 const metricExpected=(metric,rows)=>{const selected=rows.filter(row=>!metric.where||metric.where.values.includes(row[metric.where.field]));if(metric.operation==='count')return String(selected.length);const field=spec.entities.find(ent=>ent.id===metric.entity).fields.find(item=>item.id===metric.field);if(field.type==='money')return money(selected.reduce((sum,row)=>sum+(row[metric.field]==null?0n:minor(row[metric.field])),0n));return String(selected.reduce((sum,row)=>sum+(row[metric.field]??0),0));};
@@ -102,6 +105,14 @@ try{
     for(const target of status.choices){const path=pathTo(target);if(!path){unreachable.push(target);continue;}for(const step of path.slice(1))await move(step);}
     const reverse=pathTo(flow.initial);if(reverse)for(const step of reverse.slice(1))await move(step);
     check('workflow:'+flow.entity,{observed,unreachable,current},'all declared reachable stages and visible selected status',observed.length>0&&!unreachable.length&&field(d().querySelector('form'),flow.field).value===current);
+    if(!hasReverseTransition(flow)&&backwardForbidden()){
+     // Observe the prohibition: a backward save is rejected and the stored stage is unchanged.
+     await load('/?view='+viewFor(flow.entity)+'&id='+rid);const form=d().querySelector('form'),select=field(form,flow.field);
+     const offered=[...(select.options||[])].some(option=>option.value===flow.initial);
+     if(offered){fill(form,{[flow.field]:flow.initial});form.noValidate=true;await submit(form,true);}
+     const stored=(await state()).records[flow.entity].find(item=>item.id===rid)[flow.field];
+     check('workflow_forward_only',{from:current,attempted:flow.initial,offered,stored},'backward move rejected; stored stage unchanged',current!==flow.initial&&stored===current);
+    }
     if(reverseRequired(flow))check('workflow_reverse',{observed,current},'a later stage returns to the initial stage through declared transitions',!!reverse&&reverse.length>1&&current===flow.initial);
    }
   const populated=await state();check('state:populated',populated,'persisted records visible',Object.values(populated.records).every(rows=>rows.length>0));
@@ -235,6 +246,15 @@ try{
    const exists=(await state()).records[ent.id].some(r=>r.id===extra[ent.id]);check(banned?'delete_policy:'+ent.id:'delete:'+ent.id,{exists},banned?'record retained':'disposable record deleted',banned?exists:!exists);
   }
   if(criterion(/all .*deletions?.*confirm|deletions? require confirmation/))check('all_delete_confirmations',deleteConfirmations,'each declared deletable entity presents cancellable confirmation',deleteConfirmations.length===spec.entities.filter(e=>!spec.business_rules.some(r=>r.kind==='restrict_delete'&&r.entity===e.id)).length&&deleteConfirmations.every(r=>r.offered&&r.canceled));
+  const repeated=nonUniqueField();
+  if(repeated){
+   // Observe non-uniqueness: a second record may repeat the value.
+   const {ent,f}=repeated,existing=(await state()).records[ent.id].find(row=>row.id===ids[ent.id]);
+   await load('/?view='+viewFor(ent.id));const form=d().querySelector('form');const before=(await state()).records[ent.id].length;
+   fill(form,{...valuesFor(ent,ids,'duplicate'),[f.id]:existing[f.id]});await submit(form);
+   const rows=(await state()).records[ent.id];
+   check('non_unique_text',{entity:ent.id,field:f.id,value:existing[f.id],before,after:rows.length},'repeated value accepted for a non-unique field',rows.length===before+1&&rows.filter(row=>row[f.id]===existing[f.id]).length>=2);
+  }
   // Naturally applicable network failure: fail only this frame's transport for
   // one save, then restore it. Product bytes and database remain unchanged.
   const ent=spec.entities[0];

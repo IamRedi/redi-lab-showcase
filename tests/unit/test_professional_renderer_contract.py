@@ -100,3 +100,17 @@ def test_shared_renderer_failure_class_needs_requalification_provenance():
     assert review_defect_class(failed, {'new_package_sha256': 'fresh'}) == 'SHARED_RENDERER_OR_PACKAGE_CONTRACT_DEFECT'
     assert review_defect_class(failed, None) == 'PRODUCT_DEFECT'
     assert review_defect_class({'counts': {'NOT_RUN': 1}}, None) == 'HARNESS_OR_GATE_DEFECT'
+
+
+def test_empty_board_keeps_workflow_columns_and_empty_state(tmp_path):
+    # Browser acceptance audits boards on an empty database; stages must still render.
+    spec = frozen_spec();service = DataService(str(tmp_path / 'owner.sqlite3'), spec)
+    try:
+        html = render_app(spec, design(spec), service.state(), view='production_board')
+        stages = next(f for f in spec['entities'][1]['fields'] if f['id'] == 'status')['choices']
+        assert html.count('class="board-column"') == len(stages)
+        assert all('data-stage-count="' + stage + '">0' in html for stage in stages)
+        assert 'class="empty"' in html and 'No records in this stage.' in html
+        assert '<table' not in html
+    finally:
+        service.close()

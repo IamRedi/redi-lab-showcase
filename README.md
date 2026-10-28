@@ -23,17 +23,37 @@ must start in *Idea* and move forward stage by stage.
 | **The generated app with real records** | **Mobile Workbench** |
 | ![Generated app](docs/media/generated-app-board.png) | <img src="docs/media/mobile-workbench.png" width="260" alt="Mobile Workbench"> |
 
-### Governance in action
+### Governance in action: live builds from scratch
 
-Not every run ends in APP READY, and that is by design. In a live build of a car-repair job tracker,
-**Ora** stopped planning until the owner settled what the brief left open. Later **Teuta's** UI failed
-a real browser check: the dashboard was missing the filter controls the spec required. The line then
-tried a same-station correction and a stronger worker. When both failed, it stopped and asked the
-owner instead of shipping. The whole run spent USD 0.21 against a USD 2.00 ceiling.
+![Live build of a workshop job tracker](docs/media/live-build-workshop.gif)
 
-| Owner spec decision | Recovery exhausted, owner action |
+This recording ([MP4](docs/media/live-build-workshop.mp4), sped up 3×) is a real-provider build from
+scratch of a car-repair **Workshop Job Tracker**. It did **not** reach APP READY, and the factory said
+so instead of shipping. Across four live runs, totalling USD 1.03 of real spend under a USD 2.00 owner
+budget, the line:
+
+- **Paused for the owner.** Ora stopped planning whenever the brief left something open. Each answer
+  becomes a new append-only segment of the same run, hash-chained to the previous one, and there can be
+  any number of them. One run went through four owner decisions in a row.
+- **Built in parallel, live.** Andinus (data) and Bindus (workflow) worked at the same time, then Agron
+  and Teuta. The factory graph and crew update from the running worker, also inside a resumed segment.
+- **Refused to fake a pass.** Teuta's UI was checked in a real browser. When a check failed, the line
+  tried a same-station correction and then a stronger worker, and finally stopped with the exact failed
+  assertion as evidence.
+
+These runs exposed three defects in the factory's own checks, and they are fixed with tests:
+- Empty boards rendered no workflow columns.
+- A prohibition ("cannot / not move backward") was read as a required reverse move.
+- Board summaries were expected where the renderer never places them.
+
+The last run used the final remaining budget before the reverse-move fix existed, so a passing live
+build of this app is still outstanding.
+
+| Personas working in parallel | Third owner decision in one run |
 | --- | --- |
-| ![Spec decision](docs/media/owner-spec-decision.png) | ![Governed recovery](docs/media/governed-recovery.png) |
+| ![Personas working](docs/media/live-personas-working.png) | ![Owner decision](docs/media/live-third-owner-decision.png) |
+| **Live graph inside a resumed segment** | **Stopped with exact evidence** |
+| ![Live continuation graph](docs/media/live-graph-continuation.png) | ![Teuta blocked](docs/media/live-teuta-blocked.png) |
 
 ## Core ideas
 
@@ -67,7 +87,7 @@ on desktop and mobile, with budget controls, per-task telemetry and an
 
 - A **Mini CRM** built end to end by the factory line.
 - A **multi-station parallel live run** across a dependency DAG.
-- **952 tests**. On Windows, run them in UTF-8 mode (`PYTHONUTF8=1`); two integration tests depend on it.
+- **969 tests**, passing on Windows and Linux without extra settings.
 - **Zero runtime dependencies**: Python standard library only (Python 3.11+).
 
 ## Getting started

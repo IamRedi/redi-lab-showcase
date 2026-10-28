@@ -138,7 +138,7 @@ function renderOwnerDecision(s){
  const questions=choices.includes('RESOLVE_SPEC_DECISION')?(context.uncertainties||[]).map((q,i)=>'<label for="owner-resolution-'+i+'">'+esc(q)+'</label><textarea id="owner-resolution-'+i+'" data-question="'+esc(q)+'" rows="2" required></textarea>').join(''):'';
  html('owner-decision-fields',decision?'<p>Recorded decision: '+esc(decision.decision_type)+'</p>':choicesHtml+questions);
  $('owner-decision-note').hidden=!!decision;$('submit-owner-decision').hidden=!!decision||!choices.length;
- $('resume-run').hidden=!decision||!!context.segments.find(x=>x.segment_id==='0001'&&x.status!=='DECISION_RECORDED');
+ $('resume-run').hidden=!decision||!!context.segments.find(x=>x.segment_id===(context.continuation_segment_id||'0001')&&x.status!=='DECISION_RECORDED');
  $('submit-owner-decision').disabled=ownerBusy;$('resume-run').disabled=ownerBusy;
  html('owner-segment-history',(context.segments||[]).map(x=>'<li>Segment '+esc(x.segment_id)+' · '+esc(x.status)+' · '+esc(x.evidence_sha256||'execution pending')+'</li>').join(''));
 }

@@ -115,7 +115,7 @@ def test_candidate_references_pass_all_gates() -> None:
         for rel, content in task.baseline_files.items():
             path = ws / rel
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, newline="")
+            path.write_text(content, encoding="utf-8", newline="")
         cell = _run_fake_condition_cell(
             task=task, condition=condition, workspace_root=ws, scripted_outcome="success"
         )

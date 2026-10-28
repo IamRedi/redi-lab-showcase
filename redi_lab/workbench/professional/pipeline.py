@@ -495,7 +495,7 @@ class ProfessionalRunner:
             'outstanding_reservations_usd':str(self.outstanding_reservations()),'cost_ceiling_usd':self.ceiling,'elapsed_seconds':round(time.time()-self.started,3),
             'failure_stage':None if status=='VERIFIED' else self.stage,'failure_class':failure_class,'detail':detail,
             'review':review,'packaging':packaging,'runtime_identity':normal_app_runtime_status(),
-            'previous_segment_id':'0000' if self.is_continuation else None,
+            'previous_segment_id':json.loads((self.root/'owner_decision.json').read_text(encoding='utf-8'))['previous_segment_id'] if self.is_continuation else None,
             'owner_decision_sha256':hashlib.sha256((self.root/'owner_decision.json').read_bytes()).hexdigest() if self.is_continuation else None,
             'artifacts':[{'rel_path':name,'content':source,'sha256':hashlib.sha256(source.encode()).hexdigest()} for name,source in self.artifacts.items()]}
         write_new(self.root/'live_run_evidence.json',evidence)

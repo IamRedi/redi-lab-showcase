@@ -521,19 +521,21 @@ def render_app(spec, design, state, *, view=None, record_id=None, notice="", err
                     body += '<div class="field"><label for="filter-' + e(key) + '">Filter by ' + e(field['label'].lower()) + '</label><select id="filter-' + e(key) + '" name="filter_' + e(key) + '"><option value="">All ' + e(field['label'].lower()) + '</option>'
                     body += ''.join('<option value="' + e(value) + '"' + (' selected' if active_filters.get(key) == value else '') + '>' + e(title) + '</option>' for value, title in options) + '</select></div>'
                 body += '<div class="form-actions"><button type="submit">Apply filters</button><a href="' + url(view) + '">Clear filters</a></div></form>'
+            board = page['kind'] == 'board' and contract['workflow_field']
             if not selected:
                 filtered = bool(str(search).strip() or active_filters)
                 body += '<section class="empty"><h2>' + ('No matching records' if filtered else e(copy.get('empty_heading', 'No ' + entity['plural'].lower() + ' yet'))) + '</h2><p>' + ('Try another search or clear the filters.' if filtered else e(copy.get('empty_body', 'Create the first record using the form above.'))) + '</p></section>'
-            elif page['kind'] == 'board' and contract['workflow_field']:
+            if board:
+                # Workflow stages stay visible on an empty board so owners see where records will go.
                 field = next(item for item in entity['fields'] if item['id'] == contract['workflow_field'])
                 body += '<section class="board" aria-label="' + e(page['title']) + '">'
                 for choice in field['choices']:
                     column = [row for row in selected if row[field['id']] == choice]
                     body += '<section class="board-column" data-stage="' + e(choice) + '"><h2>' + e(choice) + ' <span data-stage-count="' + e(choice) + '">' + str(len(column)) + '</span></h2>' + (''.join(card(row) for row in column) or '<p class="muted">No records in this stage.</p>') + '</section>'
                 body += '</section>'
-            elif page['kind'] in {'feed', 'gallery', 'board'}:
+            elif selected and page['kind'] in {'feed', 'gallery', 'board'}:
                 body += '<section class="record-grid">' + ''.join(card(row) for row in selected) + '</section>'
-            else:
+            elif selected:
                 body += '<section class="panel"><div class="toolbar"><h2>' + e(entity['plural']) + '</h2><span class="muted">' + str(len(selected)) + ' records</span></div><div class="table-wrap"><table><thead><tr>' + ''.join('<th scope="col">' + e(field['label']) + '</th>' for field in entity['fields']) + '</tr></thead><tbody>'
                 for row in selected:
                     body += '<tr>'

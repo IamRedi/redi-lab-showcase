@@ -41,6 +41,17 @@ EVIDENCE_SCHEMA['properties'].update({
 })
 
 
+# A prohibition ("cannot move backward") is not a requirement to move back.
+NEGATED_REVERSE = re.compile(r"(cannot|can't|can not|must not|may not|never|not allowed to|no)\s+(be\s+)?(move[ds]?|go(es)?|return(s|ed)?)\s*(back|backward)")
+NEGATED_REVERSE_SHORT = re.compile(r"\b(not|never)\s+(back|backward)\b")
+
+
+def has_reverse_transition(flow):
+    """True when declared transitions lead from a later stage back to an earlier one."""
+    order = {stage: index for index, stage in enumerate([flow["initial"], *flow["transitions"]])}
+    return any(order.get(target, -1) < order.get(source, -1)
+               for source, targets in flow["transitions"].items() for target in targets)
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
@@ -131,7 +142,9 @@ criterion is silently dropped. Prohibited deletion overrides general CRUD.
             selected += ['detail_panel','cancel_edit','detail_escape']
         if re.search(r'mobile.*(stage|board|cards?)',lower):
             selected += ['board_mobile','long_title_saved','overflow']
-        if re.search(r'back to.*earlier|earlier stage|move.*back',lower):
+        # The structured workflow wins: a reverse obligation needs declared reverse transitions.
+        if (re.search(r'back to.*earlier|earlier stage|move.*back',lower) and not NEGATED_REVERSE.search(lower)
+                and not NEGATED_REVERSE_SHORT.search(lower) and any(has_reverse_transition(f) for f in spec['workflows'])):
             selected += ['workflow_reverse']
         if re.search(r'delet.*(contain|depend|linked|while it still has)',lower):
             subject = re.split(r'\b(?:contain\w*|with|linked|depend\w*)\b',lower,maxsplit=1)[0]

@@ -76,7 +76,7 @@ def test_v2_reference_passes_all_gates(tmp_path: Path) -> None:
     for rel, content in task.baseline_files.items():
         p = ws / rel
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content, newline="")
+        p.write_text(content, encoding="utf-8", newline="")
     cell = _run_fake_condition_cell(
         task=task, condition=MCW_WORKER_CONDITIONS[0], workspace_root=ws, scripted_outcome="success"
     )

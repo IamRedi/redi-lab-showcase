@@ -661,22 +661,29 @@ class WorkbenchAdapter:
             return {"error": "invalid build id"}
         continuation = self._continuations.get(build_id)
         build = self._builds.get(build_id)
+        root = WORKBENCH_ROOT / f'wb-{build_id}'
         if continuation and continuation['thread'].is_alive():
-            base = self._persisted_professional_snapshot(build_id, WORKBENCH_ROOT / f'wb-{build_id}' / 'live_run_evidence.json')
+            base = self._persisted_professional_snapshot(build_id, continuation['checkpoint'] / 'live_run_evidence.json')
             base.update(status='RUNNING', verdict='VERIFYING', app_state='VERIFYING', owner_action=None,
-                        continuation_segment_id='0001', continuation_root=str(WORKBENCH_ROOT / f'wb-{build_id}' / 'segments' / '0001'),
+                        continuation_segment_id=continuation['segment'].name, continuation_root=str(continuation['segment']),
                         elapsed_seconds=round(continuation['prior_elapsed'] + time.time() - continuation['started'], 3),
                         live_events=list(continuation['events']))
+            runner = continuation.get('runner')
+            if runner is not None:
+                base = self._with_live_runner(base, runner.snapshot())
             return base
-        segment_path = WORKBENCH_ROOT / f'wb-{build_id}' / 'segments' / '0001' / 'live_run_evidence.json'
-        if segment_path.is_file():
-            return self._persisted_professional_snapshot(build_id, segment_path)
-        if (segment_path.parent / 'resume_started.json').is_file():
-            base = self._persisted_professional_snapshot(build_id, WORKBENCH_ROOT / f'wb-{build_id}' / 'live_run_evidence.json')
+        from .professional.continuation import latest_index, segment_id
+        index = latest_index(root)
+        pending = root / 'segments' / segment_id(index + 1)
+        checkpoint = root if index == 0 else root / 'segments' / segment_id(index)
+        if (pending / 'resume_started.json').is_file():
+            base = self._persisted_professional_snapshot(build_id, checkpoint / 'live_run_evidence.json')
             base.update(owner_action={'reason':'CONTINUATION_INTERRUPTED','cause':'The continuation started but has no terminal evidence.',
                         'decision_needed':'Inspect the immutable segment and resolve the interruption before another owner decision.'},
                         detail='Continuation interrupted without terminal evidence')
             return base
+        if index:
+            return self._persisted_professional_snapshot(build_id, checkpoint / 'live_run_evidence.json')
         if build is not None and build.backend == 'openai-live-professional-product-v1' and build.status == 'OWNER_ACTION_REQUIRED':
             retained = WORKBENCH_ROOT / f'wb-{build_id}' / 'live_run_evidence.json'
             if retained.is_file():
@@ -735,13 +742,35 @@ class WorkbenchAdapter:
             root = WORKBENCH_ROOT / f'wb-{build_id}'
             snap['owner_decision'] = decision_context(root, build_id)
             if path.parent != root:
-                snap['continuation_segment_id'] = '0001'
+                snap['continuation_segment_id'] = path.parent.name
                 snap['continuation_root'] = str(path.parent)
         if snap["backend"] == "openai-live-professional-product-v1":
             snap["component_map"]["bindus"] = "workflow"
             snap["network_calls"] = snap["provider_calls"] if evidence.get("execution_mode") == "real_provider" else 0
         if snap["backend"] in ("openai-live-multistation-normal-app-experimental", "openai-live-professional-product-v1") and snap["status"] == "VERIFIED":
             snap = _delivery_snapshot(snap)
+        snap.update(crew_snapshot(snap))
+        snap["virtutes"] = {"crew": snap.pop("crew"), "active_count": snap.pop("active_count"), "total": snap.pop("total")}
+        return snap
+
+    @staticmethod
+    def _with_live_runner(snap, live):
+        """Overlay a running continuation's real runner state; nothing is inferred."""
+        states = live.get("task_states", {})
+        snap.update(app_state=live.get("app_state"), verdict=live.get("app_state") or snap.get("verdict"),
+                    task_states=states, manifest=live.get("manifest"),
+                    product_name=live.get("product_name") or snap.get("product_name"),
+                    gate_states=live.get("gate_states", {}), gates=live.get("gates", {}),
+                    call_facts=live.get("call_facts"), provider_calls=live.get("provider_calls", 0),
+                    total_provider_calls=live.get("total_provider_calls"),
+                    cost_usd=live.get("total_cost_usd"), total_cost_upper_bound_usd=live.get("total_cost_upper_bound_usd"),
+                    visual_facts=live.get("visual_facts"), recovery_episodes=live.get("recovery_episodes"),
+                    tasks=[{"node_id": t["task_id"], "station": t["persona"],
+                            "status": {"COMPLETED": "VERIFIED"}.get(states.get(t["task_id"]), states.get(t["task_id"], "PENDING"))}
+                           for t in (live.get("manifest") or {}).get("tasks", [])])
+        if snap.get("network_calls") is not None:
+            snap["network_calls"] = snap["provider_calls"] if snap.get("execution_mode") == "real_provider" else 0
+        snap.pop("virtutes", None)
         snap.update(crew_snapshot(snap))
         snap["virtutes"] = {"crew": snap.pop("crew"), "active_count": snap.pop("active_count"), "total": snap.pop("total")}
         return snap
@@ -757,11 +786,15 @@ class WorkbenchAdapter:
         root = WORKBENCH_ROOT / f'wb-{build_id}'
         with self._lock:
             prepared = prepare_resume(root, build_id)
-            state = {'started':time.time(), 'prior_elapsed':prepared[0]['elapsed_seconds'], 'events':['continuation_started']}
+            decision = prepared[2]
+            previous = decision['previous_segment_id']
+            state = {'started':time.time(), 'prior_elapsed':prepared[0]['elapsed_seconds'], 'events':['continuation_started'],
+                     'segment':prepared[3], 'checkpoint':root if previous == '0000' else root / 'segments' / previous}
             def work():
                 try:
                     execute_resume(root, build_id, prepared, client_factory=client_factory,
-                                   key=key or os.environ.get('REDI_OPENAI_API_KEY'), progress=state['events'].append)
+                                   key=key or os.environ.get('REDI_OPENAI_API_KEY'), progress=state['events'].append,
+                                   on_runner=lambda runner: state.__setitem__('runner', runner))
                 except Exception as exc:
                     from .professional.pipeline import write_new
                     from .runtime_identity import normal_app_runtime_status
@@ -776,7 +809,7 @@ class WorkbenchAdapter:
                             'detail':reason,'failure_stage':'continuation','runtime_identity':normal_app_runtime_status(),
                             'elapsed_seconds':round(prior['elapsed_seconds']+time.time()-state['started'],3),
                             'events':[{'event':'continuation_started','ts':state['started']},{'event':'owner_action_required','ts':time.time()}],
-                            'previous_segment_id':'0000','owner_decision_sha256':hashlib.sha256((segment/'owner_decision.json').read_bytes()).hexdigest()})
+                            'previous_segment_id':previous,'owner_decision_sha256':hashlib.sha256((segment/'owner_decision.json').read_bytes()).hexdigest()})
             thread=threading.Thread(target=work,daemon=True)
             state['thread']=thread;self._continuations[build_id]=state;thread.start()
         return self.snapshot(build_id)

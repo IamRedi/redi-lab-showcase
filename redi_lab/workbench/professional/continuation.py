@@ -55,12 +55,45 @@ def _hash(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def segment_id(index):
+    return f'{index:04d}'
+
+
+def _segment_dir(root, index):
+    return Path(root) / 'segments' / segment_id(index)
+
+
+def latest_index(root):
+    """Latest segment with retained terminal evidence; 0 is the original run directory."""
+    index = 0
+    while (_segment_dir(root, index + 1) / 'live_run_evidence.json').is_file():
+        index += 1
+    return index
+
+
+def checkpoint_index(root):
+    """Latest retained owner-action checkpoint that a new decision can continue."""
+    for index in range(latest_index(root), 0, -1):
+        base = _segment_dir(root, index)
+        if ((base / 'owner_action.json').is_file() and (base / 'product_order.json').is_file()
+                and _read(base / 'live_run_evidence.json').get('status') == 'OWNER_ACTION_REQUIRED'):
+            return index
+    return 0
+
+
+def _checkpoint(root, index):
+    return Path(root) if index == 0 else _segment_dir(root, index)
+
+
 def _segment(root):
-    return Path(root) / 'segments' / '0001'
+    """The next append-only segment, continuing the latest retained checkpoint."""
+    return _segment_dir(root, checkpoint_index(root) + 1)
 
 
-def _origin(root):
-    return Path(root) / 'segments' / '0000' / 'origin.json'
+def _origin(root, index=0):
+    # Checkpoint 0 keeps its historical anchor; later anchors live beside the
+    # decision that continues them, so a retained segment is never rewritten.
+    return Path(root) / 'segments' / '0000' / 'origin.json' if index == 0 else _segment_dir(root, index + 1) / 'origin.json'
 
 
 def _decision(root):
@@ -71,9 +104,11 @@ def _context(root, build_id):
     root = Path(root).resolve()
     if root.name != 'wb-' + build_id or len(build_id) != 12 or any(c not in '0123456789abcdef' for c in build_id):
         raise ValueError('Invalid logical run ID')
-    evidence = _read(root / 'live_run_evidence.json')
-    order = _read(root / 'product_order.json')
-    action = _read(root / 'owner_action.json')
+    index = checkpoint_index(root)
+    base = _checkpoint(root, index)
+    evidence = _read(base / 'live_run_evidence.json')
+    order = _read(base / 'product_order.json')
+    action = _read(base / 'owner_action.json')
     if evidence.get('build_id') != build_id or evidence.get('backend') != BACKEND or order.get('backend') != BACKEND:
         raise ValueError('Logical run or backend identity mismatch')
     if evidence.get('status') != 'OWNER_ACTION_REQUIRED' or evidence.get('owner_action') != action:
@@ -81,11 +116,11 @@ def _context(root, build_id):
     if order.get('ceiling_usd') != evidence.get('cost_ceiling_usd'):
         raise ValueError('Owner ceiling differs from retained product order')
     reason = action.get('reason')
-    if (build_id == SMOKE_RUN_ID and reason == 'RECOVERY_EXHAUSTED'
+    if (build_id == SMOKE_RUN_ID and index == 0 and reason == 'RECOVERY_EXHAUSTED'
           and evidence.get('failure_stage') == 'specification' and not (root / 'product_spec.json').exists()):
         _verify_smoke_checkpoint(root, evidence, order)
         choices = [RECOVERY_CONTINUATION]
-    elif reason == 'SPEC_DECISION_REQUIRED' and evidence.get('failure_stage') == 'specification' and not (root / 'product_spec.json').exists():
+    elif reason == 'SPEC_DECISION_REQUIRED' and evidence.get('failure_stage') == 'specification' and not (base / 'product_spec.json').exists():
         choices = ['RESOLVE_SPEC_DECISION']
     elif (reason == 'MANUAL_APPROVAL_REQUIRED' and evidence.get('failure_stage') == 'product_review'
           and evidence.get('review', {}).get('reviewer_version') == 'medaurus_requirement_review_v2'
@@ -94,26 +129,33 @@ def _context(root, build_id):
         choices = ['AUTHORIZE_EVALUATOR_REPAIR']
     else:
         choices = []
-    block_id = hashlib.sha256((_hash(root / 'live_run_evidence.json') + _hash(root / 'owner_action.json')).encode()).hexdigest()[:24]
+    block_id = hashlib.sha256((_hash(base / 'live_run_evidence.json') + _hash(base / 'owner_action.json')).encode()).hexdigest()[:24]
     return evidence, order, action, choices, block_id
 
 
+def _segment_row(root, index):
+    path = _checkpoint(root, index) / 'live_run_evidence.json'
+    if path.is_file():
+        evidence = _read(path)
+        return {'segment_id': segment_id(index), 'status': evidence['status'], 'evidence_path': str(path),
+                'evidence_sha256': _hash(path), 'runtime_identity': evidence.get('runtime_identity')}
+    return {'segment_id': segment_id(index),
+            'status': 'RUNNING' if (path.parent / 'resume_started.json').exists() else 'DECISION_RECORDED',
+            'evidence_path': None, 'evidence_sha256': None, 'runtime_identity': None}
+
+
 def decision_context(root, build_id):
+    """Context for the latest retained blocker; earlier decisions stay history."""
     evidence, order, action, choices, block_id = _context(root, build_id)
     root = Path(root)
+    index = checkpoint_index(root)
     decision = _read(_decision(root)) if _decision(root).is_file() else None
-    history = [{'segment_id': '0000', 'status': evidence['status'], 'evidence_path': str(root / 'live_run_evidence.json'),
-                'evidence_sha256': _hash(root / 'live_run_evidence.json'),
-                'runtime_identity': evidence.get('runtime_identity')}]
+    history = [_segment_row(root, n) for n in range(index + 1)]
     if decision:
-        segment = _segment(root)
-        latest = _read(segment / 'live_run_evidence.json') if (segment / 'live_run_evidence.json').is_file() else None
-        history.append({'segment_id': '0001', 'status': latest['status'] if latest else 'RUNNING' if (segment / 'resume_started.json').exists() else 'DECISION_RECORDED',
-                        'evidence_path': str(segment / 'live_run_evidence.json') if latest else None,
-                        'evidence_sha256': _hash(segment / 'live_run_evidence.json') if latest else None,
-                        'runtime_identity': latest.get('runtime_identity') if latest else None})
+        history.append(_segment_row(root, index + 1))
     return {'blocker_id': block_id, 'owner_reason': action['reason'], 'decision_needed': action['decision_needed'],
-            'evidence_sha256': _hash(root / 'live_run_evidence.json'), 'choices': choices if not decision else [],
+            'evidence_sha256': _hash(_checkpoint(root, index) / 'live_run_evidence.json'), 'choices': choices if not decision else [],
+            'checkpoint_segment_id': segment_id(index), 'continuation_segment_id': segment_id(index + 1),
             'decision': decision, 'segments': history, 'uncertainties': (evidence.get('product_spec') or {}).get('uncertainties', []),
             'budget_before_resume': _budget(evidence),
             'visual_authorization': dict(SMOKE_AUTHORIZATION) if RECOVERY_CONTINUATION in choices or
@@ -251,7 +293,8 @@ def _verify_checkpoint(root, evidence, order, choice):
     else:
         if (Path(root) / 'product_spec.json').exists() or evidence.get('manifest') is not None:
             raise ValueError('Specification checkpoint is not unresolved')
-        if not (Path(root) / 'calls/specification/output.json').is_file():
+        outputs = Path(root) / 'calls' / 'specification'
+        if not ((outputs / 'output.json').is_file() or any(outputs.glob('attempt-*/output.json'))):
             raise ValueError('Prior specification output is missing')
     if choice == RECOVERY_CONTINUATION:
         _verify_smoke_checkpoint(root, evidence, order)
@@ -290,10 +333,12 @@ def _verify_smoke_checkpoint(root, evidence, order):
 def submit_decision(root, build_id, payload):
     runtime = require_current_normal_app_runtime()
     evidence, order, action, choices, block_id = _context(root, build_id)
+    index = checkpoint_index(root)
+    base = _checkpoint(root, index)
     if _decision(root).exists():
         raise ValueError('Owner blocker already has a persisted decision')
     choice = payload.get('decision_type')
-    if choice not in choices or payload.get('blocker_id') != block_id or payload.get('evidence_sha256') != _hash(Path(root) / 'live_run_evidence.json'):
+    if choice not in choices or payload.get('blocker_id') != block_id or payload.get('evidence_sha256') != _hash(base / 'live_run_evidence.json'):
         raise ValueError('Incompatible or stale owner decision')
     note = payload.get('owner_text', '')
     if not isinstance(note, str) or len(note) > 4000:
@@ -311,22 +356,24 @@ def submit_decision(root, build_id, payload):
             raise ValueError('Exact visual worker, reviewer and smoke authorization is required')
     elif authorization is not None:
         raise ValueError('Visual authorization is incompatible with this decision')
-    _verify_checkpoint(root, evidence, order, choice)
-    files = {name: _hash(Path(root) / name) for name in HASHED_ORIGIN if (Path(root) / name).is_file()}
+    _verify_checkpoint(base, evidence, order, choice)
+    for earlier in range(index):
+        _verify_history(_checkpoint(root, earlier), _read(_origin(root, earlier)))
+    files = {name: _hash(base / name) for name in HASHED_ORIGIN if (base / name).is_file()}
     for directory in ('calls', 'artifacts', 'recovery'):
-        for path in (Path(root) / directory).rglob('*'):
-            if path.is_file(): files[str(path.relative_to(root)).replace('\\', '/')] = _hash(path)
-    origin = {'schema_version': SEGMENT_VERSION, 'logical_run_id': build_id, 'segment_id': '0000',
+        for path in (base / directory).rglob('*'):
+            if path.is_file(): files[str(path.relative_to(base)).replace('\\', '/')] = _hash(path)
+    origin = {'schema_version': SEGMENT_VERSION, 'logical_run_id': build_id, 'segment_id': segment_id(index),
               'status': evidence['status'], 'runtime_identity': evidence['runtime_identity'], 'file_hashes': files,
               'package_sha256': evidence['packaging']['package_sha256'] if evidence.get('packaging') else None}
-    if _origin(root).exists():
-        if _read(_origin(root)) != origin: raise ValueError('Historical segment anchor changed')
-    else: write_new(_origin(root), origin)
+    if _origin(root, index).exists():
+        if _read(_origin(root, index)) != origin: raise ValueError('Historical segment anchor changed')
+    else: write_new(_origin(root, index), origin)
     record = {'schema_version': VERSION, 'logical_run_id': build_id, 'owner_block_id': block_id,
               'owner_action_reason_code': action['reason'], 'decision_type': choice, 'owner_text': note,
               'resolutions': resolutions or {}, 'timestamp': time.time(), 'runtime_identity': runtime,
-              'evidence_sha256': _hash(Path(root) / 'live_run_evidence.json'), 'previous_segment_id': '0000',
-              'continuation_segment_id': '0001', 'budget_before_resume': _budget(evidence),
+              'evidence_sha256': _hash(base / 'live_run_evidence.json'), 'previous_segment_id': segment_id(index),
+              'continuation_segment_id': segment_id(index + 1), 'budget_before_resume': _budget(evidence),
               'authorization_scope': 'zana_smoke_specification_reentry_with_governed_visuals' if choice == RECOVERY_CONTINUATION else 'evaluator_coverage_and_affected_station_repair_within_existing_budget' if choice == 'AUTHORIZE_EVALUATOR_REPAIR' else 'resolve_specification_and_continue_within_existing_budget',
               'visual_authorization': dict(authorization) if choice == RECOVERY_CONTINUATION else None}
     write_new(_decision(root), record)
@@ -336,9 +383,13 @@ def submit_decision(root, build_id, payload):
 def prepare_resume(root, build_id):
     runtime = require_current_normal_app_runtime()
     evidence, order, action, choices, block_id = _context(root, build_id)
+    index = checkpoint_index(root)
+    base = _checkpoint(root, index)
     decision = _read(_decision(root))
-    origin = _read(_origin(root))
-    if decision['logical_run_id'] != build_id or decision['owner_block_id'] != block_id or decision['evidence_sha256'] != _hash(Path(root) / 'live_run_evidence.json'):
+    origin = _read(_origin(root, index))
+    if (decision['logical_run_id'] != build_id or decision['owner_block_id'] != block_id or
+            decision['evidence_sha256'] != _hash(base / 'live_run_evidence.json') or
+            decision['previous_segment_id'] != segment_id(index)):
         raise ValueError('Owner decision or blocker identity changed')
     if decision['decision_type'] not in choices:
         raise ValueError('Decision no longer matches the retained blocker')
@@ -350,15 +401,17 @@ def prepare_resume(root, build_id):
         raise ValueError('Historical budget or runtime identity changed')
     if decision['decision_type'] == 'RESOLVE_SPEC_DECISION':
         _retained_visual_authorization(root, build_id, evidence, order)
-    _verify_history(root, origin)
-    if origin['package_sha256'] is not None and verify_package(Path(root) / 'app') != origin['package_sha256']:
+    for earlier in range(index):
+        _verify_history(_checkpoint(root, earlier), _read(_origin(root, earlier)))
+    _verify_history(base, origin)
+    if origin['package_sha256'] is not None and verify_package(base / 'app') != origin['package_sha256']:
         raise ValueError('Retained package changed')
-    _verify_checkpoint(root, evidence, order, decision['decision_type'])
+    _verify_checkpoint(base, evidence, order, decision['decision_type'])
     segment = _segment(root)
     if (segment / 'resume_started.json').exists():
         raise ValueError('Continuation already started; duplicate resume rejected')
     write_new(segment / 'resume_started.json', {'schema_version': SEGMENT_VERSION, 'logical_run_id': build_id,
-              'previous_segment_id': '0000', 'segment_id': '0001', 'decision_sha256': _hash(_decision(root)),
+              'previous_segment_id': segment_id(index), 'segment_id': segment_id(index + 1), 'decision_sha256': _hash(_decision(root)),
               'runtime_identity': runtime, 'started_at': time.time()})
     return evidence, order, decision, segment
 
@@ -418,8 +471,8 @@ def _blocked_local_resume(segment, evidence, decision, build_id, started, exc, s
               'gates': gates['gates'] if gates else {key: False for key in evidence['gates']},
               'runtime_identity': normal_app_runtime_status(),
               'elapsed_seconds': round(evidence['elapsed_seconds'] + time.time() - started, 3),
-              'previous_segment_id': '0000', 'owner_decision_sha256': _hash(_decision(segment.parent.parent)),
-              'events': _segment_events(segment, [{'event': 'continuation_started', 'ts': started, 'segment_id': '0001'},
+              'previous_segment_id': decision['previous_segment_id'], 'owner_decision_sha256': _hash(segment / 'owner_decision.json'),
+              'events': _segment_events(segment, [{'event': 'continuation_started', 'ts': started, 'segment_id': decision['continuation_segment_id']},
                           {'event': 'shared_renderer_requalification_failed', 'ts': time.time(), 'reason': reason},
                           {'event': 'owner_action_required', 'ts': time.time()}])}
     write_new(segment / 'owner_action.json', owner)
@@ -438,7 +491,7 @@ def _restore_smoke_runner(root, build_id, prepared, *, client_factory, key, prog
         decision.get('budget_before_resume') != _budget(evidence) or
         _hash(_decision(root)) != _read(segment / 'resume_started.json')['decision_sha256']):
         raise ValueError('Continuation identity, authorization or cumulative budget changed')
-    _verify_history(root, _read(_origin(root)))
+    _verify_history(root, _read(_origin(root, 0)))
     _verify_checkpoint(root, evidence, order, RECOVERY_CONTINUATION)
     if not key or client_factory is None and (os.environ.get('REDI_LIVE_PROVIDER') != '1' or os.environ.get('REDI_ZANA_VISUAL_AUTHORIZED') != '1'):
         raise ValueError('Governed credential and separate live visual authorization are required')
@@ -462,15 +515,22 @@ def _restore_smoke_runner(root, build_id, prepared, *, client_factory, key, prog
                        visual_worker=worker, visual_reviewer=reviewer)
 
 
-def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, progress=None):
-    """Run only the checkpoint's remaining work. Caller supplies a test client or live key."""
+def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, progress=None, on_runner=None):
+    """Run only the checkpoint's remaining work. Caller supplies a test client or live key.
+
+    ``on_runner`` receives the live runner before it starts so a UI can read
+    its real task states while the continuation executes.
+    """
     evidence, order, decision, segment = prepared
+    base = _checkpoint(root, int(decision['previous_segment_id']))
     started = time.time()
     choice = decision['decision_type']
     result = None
     if choice == RECOVERY_CONTINUATION:
-        result = _restore_smoke_runner(root, build_id, prepared, client_factory=client_factory,
-                                       key=key, progress=progress).run()
+        runner = _restore_smoke_runner(root, build_id, prepared, client_factory=client_factory,
+                                       key=key, progress=progress)
+        if on_runner: on_runner(runner)
+        result = runner.run()
     elif choice == 'RESOLVE_SPEC_DECISION':
         if not key or os.environ.get('REDI_LIVE_PROVIDER') != '1' and client_factory is None:
             raise ValueError('Provider credential and live flag required for specification continuation')
@@ -487,11 +547,12 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
                                     recovery_budget=RecoveryBudget(**order['recovery_budget']),
                                     recovery_profiles=order['recovery_profiles'], logical_run_id=build_id, prior=evidence,
                                     visual_worker=visual_worker, visual_reviewer=visual_reviewer)
+        if on_runner: on_runner(runner)
         result = runner.run()
     else:
         if progress: progress('product_review_started')
         spec = evidence['product_spec']
-        old_runtime = _hash(Path(root) / 'app' / 'product_app' / 'runtime.py')
+        old_runtime = _hash(base / 'app' / 'product_app' / 'runtime.py')
         from . import runtime as shared_runtime
         new_runtime = _hash(shared_runtime.__file__)
         requalified = None
@@ -503,8 +564,8 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
                 raise ValueError('Shared renderer local-repair budget exhausted')
             if progress: progress('shared_renderer_requalification_started')
             try:
-                requalified = rebuild_shared_renderer(Path(root) / 'app', segment, spec,
-                                                       _read(Path(root) / 'frozen_gate_contract.json'))
+                requalified = rebuild_shared_renderer(base / 'app', segment, spec,
+                                                       _read(base / 'frozen_gate_contract.json'))
             except Exception as exc:
                 return _blocked_local_resume(segment, evidence, decision, build_id, started, exc,
                                              'shared_renderer_requalification', progress)
@@ -515,7 +576,7 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
                              'original_runtime_sha256': old_runtime, 'new_runtime_sha256': new_runtime})
             if progress: progress('shared_renderer_requalification_finished:pass')
         else:
-            _copy_package(Path(root) / 'app', segment / 'app')
+            _copy_package(base / 'app', segment / 'app')
         try:
             collected = collect(segment / 'app', spec, 'wb-' + build_id, segment / 'acceptance')
         except Exception as exc:
@@ -544,7 +605,7 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
                   'gate_states': current_gates['gate_states'] if current_gates else evidence['gate_states'],
                   'elapsed_seconds': round(evidence['elapsed_seconds'] + time.time() - started, 3),
                   'runtime_identity': normal_app_runtime_status(),
-                  'events': _segment_events(segment, [{'event': 'continuation_started', 'ts': started, 'segment_id': '0001'},
+                  'events': _segment_events(segment, [{'event': 'continuation_started', 'ts': started, 'segment_id': decision['continuation_segment_id']},
                              *([{'event': 'shared_renderer_requalification_finished:pass', 'ts': time.time(),
                                  'runtime_sha256': new_runtime, 'package_sha256': requalified['new_package_sha256']}]
                                if requalified else []),
@@ -553,7 +614,7 @@ def execute_resume(root, build_id, prepared, *, client_factory=None, key=None, p
                   'packaging': {**evidence['packaging'], 'project_path': str(segment / 'app'),
                                 'package_sha256': verify_package(segment / 'app'),
                                 **({'smoke': requalified['smoke'], 'browser': requalified['browser']} if requalified else {})},
-                  'previous_segment_id': '0000', 'owner_decision_sha256': _hash(_decision(root))}
+                  'previous_segment_id': decision['previous_segment_id'], 'owner_decision_sha256': _hash(segment / 'owner_decision.json')}
         if owner: write_new(segment / 'owner_action.json', owner)
         write_new(segment / 'live_run_evidence.json', result)
         if status == 'VERIFIED':

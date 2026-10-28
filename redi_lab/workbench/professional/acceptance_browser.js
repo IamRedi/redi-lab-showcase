@@ -35,6 +35,12 @@ const valuesFor=(ent,ids,suffix='')=>Object.fromEntries(ent.fields.map(f=>{
  return [f.id,val];
 }));
 const criterion=pattern=>spec.acceptance_criteria.some(text=>pattern.test(text.toLowerCase()));
+// A prohibition ("cannot move backward") is not a requirement to move back.
+const NEGATED_REVERSE=/(cannot|can't|can not|must not|may not|never|not allowed to|no)\s+(be\s+)?(move[ds]?|go(es)?|return(s|ed)?)\s*(back|backward)/;
+const NEGATED_REVERSE_SHORT=/\b(not|never)\s+(back|backward)\b/;
+// The structured workflow wins: a reverse obligation needs declared reverse transitions.
+const hasReverseTransition=flow=>{const order=[flow.initial,...Object.keys(flow.transitions)];return Object.entries(flow.transitions).some(([from,targets])=>targets.some(to=>order.indexOf(to)>-1&&order.indexOf(to)<order.indexOf(from)));};
+const reverseRequired=flow=>hasReverseTransition(flow)&&spec.acceptance_criteria.some(text=>{const lower=text.toLowerCase();return /back to.*earlier|earlier stage|move.*back/.test(lower)&&!NEGATED_REVERSE.test(lower)&&!NEGATED_REVERSE_SHORT.test(lower);});
 const collectionIds=()=>[...d().querySelectorAll('.record-card a[href*="id="],tbody a[href*="id="]')].map(el=>Number(new URL(el.href).searchParams.get('id'))).sort((a,b)=>a-b);
 const metricExpected=(metric,rows)=>{const selected=rows.filter(row=>!metric.where||metric.where.values.includes(row[metric.where.field]));if(metric.operation==='count')return String(selected.length);const field=spec.entities.find(ent=>ent.id===metric.entity).fields.find(item=>item.id===metric.field);if(field.type==='money')return money(selected.reduce((sum,row)=>sum+(row[metric.field]==null?0n:minor(row[metric.field])),0n));return String(selected.reduce((sum,row)=>sum+(row[metric.field]??0),0));};
 const shownMetrics=()=>Object.fromEntries(spec.metrics.map(metric=>[metric.id,d().querySelector('[data-metric="'+metric.id+'"]')?.textContent?.trim()]));
@@ -96,7 +102,7 @@ try{
     for(const target of status.choices){const path=pathTo(target);if(!path){unreachable.push(target);continue;}for(const step of path.slice(1))await move(step);}
     const reverse=pathTo(flow.initial);if(reverse)for(const step of reverse.slice(1))await move(step);
     check('workflow:'+flow.entity,{observed,unreachable,current},'all declared reachable stages and visible selected status',observed.length>0&&!unreachable.length&&field(d().querySelector('form'),flow.field).value===current);
-    if(criterion(/back to.*earlier|earlier stage|move.*back/))check('workflow_reverse',{observed,current},'a later stage returns to the initial stage through declared transitions',!!reverse&&reverse.length>1&&current===flow.initial);
+    if(reverseRequired(flow))check('workflow_reverse',{observed,current},'a later stage returns to the initial stage through declared transitions',!!reverse&&reverse.length>1&&current===flow.initial);
    }
   const populated=await state();check('state:populated',populated,'persisted records visible',Object.values(populated.records).every(rows=>rows.length>0));
   for(const view of spec.views.filter(item=>item.kind==='board')){
@@ -202,8 +208,9 @@ try{
    if(reference)combined['filter_'+reference.id]=String(second[reference.id]);
    await load(params(board.id,combined));
    check('combined_filters',{query:combined,ids:collectionIds()},'search and all active filters intersect',JSON.stringify(collectionIds())===JSON.stringify([second.id]));
-   const displayed=shownMetrics(),expected=Object.fromEntries(spec.metrics.map(metric=>[metric.id,metricExpected(metric,metric.entity===ent.id?[second]:data.records[metric.entity])]));
-   check('filtered_metrics',{displayed,expected},'nonempty filtered summaries use the selected records',Object.keys(expected).every(key=>displayed[key]===expected[key]));
+   // Summaries render on the primary view and dashboards only (runtime presentation contract).
+   if(spec.metrics.length&&board.id===spec.navigation[0]){const displayed=shownMetrics(),expected=Object.fromEntries(spec.metrics.map(metric=>[metric.id,metricExpected(metric,metric.entity===ent.id?[second]:data.records[metric.entity])]));
+   check('filtered_metrics',{displayed,expected},'nonempty filtered summaries use the selected records',Object.keys(expected).every(key=>displayed[key]===expected[key]));}
    await load(params(board.id,{search:String(main[display]),['filter_'+flow.field]:String(second[flow.field])}));
    check('combined_filters',{ids:collectionIds()},'conflicting search and filter has no records',collectionIds().length===0&&!!d().querySelector('.empty'));
    await load(params(board.id));

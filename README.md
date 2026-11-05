@@ -67,6 +67,46 @@ Those stops exposed defects in the factory's own checks, and each is fixed with 
 | --- | --- |
 | ![Owner decision](docs/media/live-third-owner-decision.png) | ![Teuta blocked](docs/media/live-teuta-blocked.png) |
 
+## DERADA — knowledge and publishing
+
+DERADA is the personal publishing studio within REDI Lab. It brings project
+sources, book planning, text and illustration review, editions and exports into
+one workspace. Supported outputs include EPUB, PDF, Word and StoryPack. The
+current studio interface is mainly Albanian; source-language editions support
+Albanian, German, English and Italian. AI-assisted work keeps an explicit review
+and cost decision before START.
+
+![DERADA presentation website, Albanian light theme](docs/media/derada-website.png)
+
+The public presentation is live in
+[SQ](https://derada.redioncekrezi.de/sq.html) /
+[DE](https://derada.redioncekrezi.de/de.html) /
+[EN](https://derada.redioncekrezi.de/en.html) /
+[IT](https://derada.redioncekrezi.de/it.html), with light and
+night themes, localized legal pages and an explicit owner-access disclosure.
+The image above is a capture of the actual public website; its publishing
+house artwork is a labelled decorative illustration. It contains no private
+book pages or customer records.
+
+Automation connects structured writing, selected-style illustrations and
+layout, direct-from-original translation, exports and version history in one
+studio. The presentation explains these capabilities without invented time or
+cost savings; facts, citations and sharing remain review decisions.
+
+**Status — 5 November 2026:** the public hostname passed 36 anonymous HTTP
+checks, 24 language/theme/viewport observations and 16 legal-page observations.
+The existing owner-only Tailscale entry was verified from the owner's laptop,
+including the live presentation-to-studio flow. This is a private personal studio with a public
+information page; there is no public registration or generation endpoint.
+ArborKnowledge Studio remains a separate project.
+
+The bounded public website source and verification receipt are maintained in
+[the portfolio repository](https://github.com/IamRedi/redion-portfolio-/tree/main/tools/derada-presentation)
+and [the presentation receipt](https://github.com/IamRedi/redion-portfolio-/blob/main/docs/DERADA_WEBSITE_20261105.md).
+The existing VIRTUTES software-factory status, media, About and homepage still
+describe the wider REDI Lab project; this addition does not replace them or
+raise their readiness.
+
 ## Core ideas
 
 - **Stations vs. workers.** A station (spec, build, test, review, visual…)
